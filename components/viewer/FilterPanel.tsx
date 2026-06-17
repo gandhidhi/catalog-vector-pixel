@@ -138,6 +138,7 @@ export default function FilterPanel({
             onChange={(e) => onSortChange(e.target.value)}
             className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs focus:border-blue-400 focus:outline-none"
           >
+            <option value="random">ランダム</option>
             <option value="assignment_desc">課題番号（新しい順）</option>
             <option value="student_asc">学籍番号（昇順）</option>
             <option value="student_desc">学籍番号（降順）</option>

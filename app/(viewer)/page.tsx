@@ -26,7 +26,7 @@ export default function ViewerPage() {
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [selectedAssignments, setSelectedAssignments] = useState<string[]>([]);
   const [selectedBadges, setSelectedBadges] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState("assignment_desc");
+  const [sortBy, setSortBy] = useState("random");
 
   // Filter options (fetched from API)
   const [studentOptions, setStudentOptions] = useState<FilterOption[]>([]);
@@ -96,7 +96,7 @@ export default function ViewerPage() {
         if (selectedBadges.length > 0) {
           params.set("badgeIds", selectedBadges.join(","));
         }
-        if (sortBy !== "assignment_desc") {
+        if (sortBy !== "random" && sortBy !== "assignment_desc") {
           params.set("sortBy", sortBy);
         }
 
@@ -105,10 +105,16 @@ export default function ViewerPage() {
 
         const data: WorkListResponse = await res.json();
 
+        // ランダムの場合、クライアント側でシャッフル
+        let worksToSet = data.works;
+        if (sortBy === "random") {
+          worksToSet = [...data.works].sort(() => Math.random() - 0.5);
+        }
+
         if (append) {
-          setWorks((prev) => [...prev, ...data.works]);
+          setWorks((prev) => [...prev, ...worksToSet]);
         } else {
-          setWorks(data.works);
+          setWorks(worksToSet);
         }
         setTotal(data.total);
         setPage(data.page);
@@ -185,7 +191,7 @@ export default function ViewerPage() {
     setSelectedStudents([]);
     setSelectedAssignments([]);
     setSelectedBadges([]);
-    setSortBy("assignment_desc");
+    setSortBy("random");
   }
 
   const hasActiveFilters =
