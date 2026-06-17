@@ -76,6 +76,22 @@ export default function StudentsPage() {
     return Object.keys(errors).length === 0;
   }
 
+  async function handleDeleteStudent(id: string, name: string) {
+    if (!confirm(`学生「${name}」を削除しますか？`)) return;
+    try {
+      const res = await fetch(`/api/students/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "削除に失敗しました");
+        return;
+      }
+      setSuccess(`学生「${name}」を削除しました`);
+      fetchStudents();
+    } catch {
+      setError("通信エラーが発生しました");
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -377,6 +393,9 @@ export default function StudentsPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     登録日
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    操作
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -404,6 +423,15 @@ export default function StudentsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(student.createdAt).toLocaleDateString("ja-JP")}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteStudent(student.id, student.name)}
+                        className="text-red-600 hover:text-red-800 text-xs"
+                      >
+                        削除
+                      </button>
                     </td>
                   </tr>
                 ))}

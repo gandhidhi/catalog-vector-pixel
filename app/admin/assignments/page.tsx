@@ -103,6 +103,22 @@ export default function AssignmentsPage() {
     }
   }
 
+  async function handleDeleteAssignment(id: string, name: string) {
+    if (!confirm(`課題「${name}」を削除しますか？`)) return;
+    try {
+      const res = await fetch(`/api/assignments/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "削除に失敗しました");
+        return;
+      }
+      setSuccess(`課題「${name}」を削除しました`);
+      fetchAssignments();
+    } catch {
+      setError("通信エラーが発生しました");
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -212,6 +228,9 @@ export default function AssignmentsPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     登録日
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    操作
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -227,6 +246,15 @@ export default function AssignmentsPage() {
                       {new Date(assignment.createdAt).toLocaleDateString(
                         "ja-JP",
                       )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteAssignment(assignment.id, assignment.name)}
+                        className="text-red-600 hover:text-red-800 text-xs"
+                      >
+                        削除
+                      </button>
                     </td>
                   </tr>
                 ))}
