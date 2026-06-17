@@ -269,6 +269,7 @@ export default function BadgesPage() {
             onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
             className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
           >
+            <option value="random">ランダム</option>
             <option value="student_asc">学籍番号（昇順）</option>
             <option value="student_desc">学籍番号（降順）</option>
             <option value="assignment_desc">課題番号（新しい順）</option>
