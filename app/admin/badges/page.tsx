@@ -18,6 +18,7 @@ export default function BadgesPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [total, setTotal] = useState(0);
   const [selectedAssignment, setSelectedAssignment] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("student_asc");
   const [error, setError] = useState<string | null>(null);
 
   // Fetch badge types
@@ -58,6 +59,7 @@ export default function BadgesPage() {
       const params = new URLSearchParams({
         page: String(page),
         pageSize: "20",
+        sortBy,
       });
       if (selectedAssignment) {
         params.set("assignmentIds", selectedAssignment);
@@ -73,7 +75,7 @@ export default function BadgesPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, selectedAssignment]);
+  }, [page, selectedAssignment, sortBy]);
 
   useEffect(() => {
     fetchWorks();
@@ -259,6 +261,18 @@ export default function BadgesPage() {
               課題{a.number}: {a.name}
             </button>
           ))}
+        </div>
+        <div className="mt-4 flex items-center gap-3">
+          <span className="text-sm text-gray-600">並び替え:</span>
+          <select
+            value={sortBy}
+            onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
+            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+          >
+            <option value="student_asc">学籍番号（昇順）</option>
+            <option value="student_desc">学籍番号（降順）</option>
+            <option value="assignment_desc">課題番号（新しい順）</option>
+          </select>
         </div>
       </div>
 

@@ -26,6 +26,7 @@ export default function ViewerPage() {
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [selectedAssignments, setSelectedAssignments] = useState<string[]>([]);
   const [selectedBadges, setSelectedBadges] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState("assignment_desc");
 
   // Filter options (fetched from API)
   const [studentOptions, setStudentOptions] = useState<FilterOption[]>([]);
@@ -95,6 +96,9 @@ export default function ViewerPage() {
         if (selectedBadges.length > 0) {
           params.set("badgeIds", selectedBadges.join(","));
         }
+        if (sortBy !== "assignment_desc") {
+          params.set("sortBy", sortBy);
+        }
 
         const res = await fetch(`/api/works?${params.toString()}`);
         if (!res.ok) throw new Error("Failed to fetch works");
@@ -120,7 +124,7 @@ export default function ViewerPage() {
         setLoading(false);
       }
     },
-    [selectedStudents, selectedAssignments, selectedBadges, studentOptions.length],
+    [selectedStudents, selectedAssignments, selectedBadges, sortBy, studentOptions.length],
   );
 
   // Fetch student options (unique students from works)
@@ -167,7 +171,7 @@ export default function ViewerPage() {
   useEffect(() => {
     fetchWorks(1, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedStudents, selectedAssignments, selectedBadges]);
+  }, [selectedStudents, selectedAssignments, selectedBadges, sortBy]);
 
   // Handle load more
   function handleLoadMore() {
@@ -181,6 +185,7 @@ export default function ViewerPage() {
     setSelectedStudents([]);
     setSelectedAssignments([]);
     setSelectedBadges([]);
+    setSortBy("assignment_desc");
   }
 
   const hasActiveFilters =
@@ -214,6 +219,8 @@ export default function ViewerPage() {
               onStudentsChange={setSelectedStudents}
               onAssignmentsChange={setSelectedAssignments}
               onBadgesChange={setSelectedBadges}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
               onReset={handleReset}
             />
           </aside>

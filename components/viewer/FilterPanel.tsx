@@ -14,9 +14,11 @@ interface FilterPanelProps {
   selectedStudents: string[];
   selectedAssignments: string[];
   selectedBadges: string[];
+  sortBy: string;
   onStudentsChange: (ids: string[]) => void;
   onAssignmentsChange: (ids: string[]) => void;
   onBadgesChange: (ids: string[]) => void;
+  onSortChange: (sort: string) => void;
   onReset: () => void;
 }
 
@@ -27,9 +29,11 @@ export default function FilterPanel({
   selectedStudents,
   selectedAssignments,
   selectedBadges,
+  sortBy,
   onStudentsChange,
   onAssignmentsChange,
   onBadgesChange,
+  onSortChange,
   onReset,
 }: FilterPanelProps) {
   const hasActiveFilters =
@@ -124,6 +128,20 @@ export default function FilterPanel({
               </label>
             ))}
           </div>
+        </div>
+
+        {/* Sort */}
+        <div>
+          <p className="mb-1.5 text-xs font-medium text-gray-600">並び替え</p>
+          <select
+            value={sortBy}
+            onChange={(e) => onSortChange(e.target.value)}
+            className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs focus:border-blue-400 focus:outline-none"
+          >
+            <option value="assignment_desc">課題番号（新しい順）</option>
+            <option value="student_asc">学籍番号（昇順）</option>
+            <option value="student_desc">学籍番号（降順）</option>
+          </select>
         </div>
       </div>
     </div>

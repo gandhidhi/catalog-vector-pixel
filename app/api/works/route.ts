@@ -12,6 +12,7 @@ import { WorkItem, WorkListResponse } from "@/lib/types";
  * - hasBadge: "true" でバッジ付き作品のみ
  * - page: ページ番号（1始まり、デフォルト1）
  * - pageSize: ページサイズ（デフォルト20）
+ * - sortBy: ソート順（"assignment_desc"=課題番号降順（デフォルト）, "student_asc"=学籍番号昇順, "student_desc"=学籍番号降順）
  */
 export async function GET(request: NextRequest) {
   const supabase = createClient();
@@ -24,6 +25,7 @@ export async function GET(request: NextRequest) {
   const hasBadgeParam = searchParams.get("hasBadge");
   const pageParam = searchParams.get("page");
   const pageSizeParam = searchParams.get("pageSize");
+  const sortByParam = searchParams.get("sortBy") ?? "assignment_desc";
 
   const studentIds = studentIdsParam
     ? studentIdsParam.split(",").filter(Boolean)
@@ -127,13 +129,28 @@ export async function GET(request: NextRequest) {
       assignment_id,
       image_url,
       uploaded_at,
-      students!inner (id, name),
+      students!inner (id, student_id, name),
       assignments!inner (id, name, number)
     `,
-    )
-    .order("number", { referencedTable: "assignments", ascending: false })
-    .order("student_id", { ascending: true })
-    .range(from, to);
+    );
+
+  // ソート順の適用
+  if (sortByParam === "student_asc") {
+    dataQuery = dataQuery
+      .order("student_id", { referencedTable: "students", ascending: true })
+      .order("number", { referencedTable: "assignments", ascending: false });
+  } else if (sortByParam === "student_desc") {
+    dataQuery = dataQuery
+      .order("student_id", { referencedTable: "students", ascending: false })
+      .order("number", { referencedTable: "assignments", ascending: false });
+  } else {
+    // デフォルト: assignment_desc
+    dataQuery = dataQuery
+      .order("number", { referencedTable: "assignments", ascending: false })
+      .order("student_id", { ascending: true });
+  }
+
+  dataQuery = dataQuery.range(from, to);
 
   if (studentIds && studentIds.length > 0) {
     dataQuery = dataQuery.in("student_id", studentIds);
@@ -195,7 +212,7 @@ export async function GET(request: NextRequest) {
 
   // レスポンスの構築
   const works: WorkItem[] = (worksData ?? []).map((row) => {
-    const student = row.students as unknown as { id: string; name: string };
+    const student = row.students as unknown as { id: string; student_id: string; name: string };
     const assignment = row.assignments as unknown as {
       id: string;
       name: string;
