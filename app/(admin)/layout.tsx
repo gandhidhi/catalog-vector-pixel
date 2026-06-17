@@ -39,6 +39,12 @@ export default async function AdminLayout({
                   アップロード
                 </a>
                 <a
+                  href="/admin/bulk-upload"
+                  className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-md hover:bg-gray-100"
+                >
+                  一括アップロード
+                </a>
+                <a
                   href="/admin/students"
                   className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-md hover:bg-gray-100"
                 >

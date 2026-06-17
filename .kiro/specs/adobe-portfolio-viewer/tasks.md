@@ -112,7 +112,7 @@ Adobe Portfolio Viewerの実装計画。Next.js 14 (App Router) + Supabase (Post
 - [~] 5. チェックポイント - マスターデータ管理の検証
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 6. ローカル変換ツール実装
+- [x] 6. ローカル変換ツール実装
   - [x] 6.1 変換ツール基盤実装
     - `packages/converter/src/converter/image-processor.ts`: sharpによるリサイズ（長辺1280px以下）＋圧縮（500KB以下）
     - `packages/converter/src/validators/filename.ts`: ファイル名バリデーション＋修正候補提示
@@ -144,7 +144,7 @@ Adobe Portfolio Viewerの実装計画。Next.js 14 (App Router) + Supabase (Post
     - sharpでPNG変換
     - _Requirements: 4.4_
 
-  - [~] 6.7 CLIモード実装
+  - [x] 6.7 CLIモード実装
     - `packages/converter/src/cli.ts`: `npx convert-works ./folder --assignment N` コマンド
     - 起動時プリフライトチェック（Ghostscriptインストール確認、入力ディレクトリ存在確認）
     - 進捗表示（処理済みファイル数/全ファイル数、現在処理中ファイル名）
@@ -157,7 +157,7 @@ Adobe Portfolio Viewerの実装計画。Next.js 14 (App Router) + Supabase (Post
     - fast-checkで1ファイルの変換エラーが他ファイルの処理を停止させないことを検証する
     - **Validates: Requirements 4.11**
 
-  - [~] 6.9 Web UIモード実装
+  - [x] 6.9 Web UIモード実装
     - `packages/converter/src/server.ts`: `npx start-converter` でlocalhost:3000起動
     - `packages/converter/src/ui/`: ブラウザGUI（フォルダ選択、課題番号入力、変換実行）
     - 変換済みPNGプレビュー一覧表示
@@ -167,8 +167,8 @@ Adobe Portfolio Viewerの実装計画。Next.js 14 (App Router) + Supabase (Post
 - [~] 7. チェックポイント - 変換ツールの検証
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 8. ファイルアップロード機能
-  - [~] 8.1 単体アップロードAPI・UI実装
+- [x] 8. ファイルアップロード機能
+  - [x] 8.1 単体アップロードAPI・UI実装
     - `app/api/uploads/single/route.ts`: POST（認証必須、PNGバリデーション、Supabase Storage保存、DBメタデータ登録）
     - トランザクション管理（Storage保存失敗時のロールバック）
     - 学生・課題の存在確認
@@ -177,7 +177,7 @@ Adobe Portfolio Viewerの実装計画。Next.js 14 (App Router) + Supabase (Post
     - アップロード成功時のフィードバック表示（ファイル名、学生名、課題名）
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 9.3, 9.4_
 
-  - [~] 8.2 バルクアップロードAPI・UI実装
+  - [x] 8.2 バルクアップロードAPI・UI実装
     - `app/api/uploads/bulk/route.ts`: POST（認証必須、最大150ファイル、ファイル名パース→学生自動紐づけ）
     - continue-on-error方式（有効ファイルは処理続行、無効ファイルは失敗理由記録）
     - `app/(admin)/bulk-upload/page.tsx`: 課題選択・複数ファイル選択UI
@@ -210,7 +210,7 @@ Adobe Portfolio Viewerの実装計画。Next.js 14 (App Router) + Supabase (Post
     - 画像読み込み失敗時のプレースホルダー表示
     - _Requirements: 5.1, 5.2, 5.4, 5.5, 5.6_
 
-  - [~] 10.2 作品一覧API実装
+  - [x] 10.2 作品一覧API実装
     - `app/api/works/route.ts`: GET（フィルター・ページネーション対応、認証不要）
     - クエリパラメータ: studentIds, assignmentIds, badgeIds, hasBadge, page, pageSize
     - JOINクエリ（students, assignments, work_badges, badge_types）
@@ -246,7 +246,7 @@ Adobe Portfolio Viewerの実装計画。Next.js 14 (App Router) + Supabase (Post
     - _Requirements: 5.3_
 
 - [ ] 11. バッジシステム実装
-  - [~] 11.1 バッジ付与・削除API実装
+  - [x] 11.1 バッジ付与・削除API実装
     - `app/api/badges/route.ts`: POST（バッジ付与、認証必須）
     - 付与上限チェック（1作品最大3個）
     - 同一バッジ重複付与の禁止（UNIQUE制約）
