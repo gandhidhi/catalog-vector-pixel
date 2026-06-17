@@ -59,12 +59,12 @@ export default function WorkCard({ work, onClick }: WorkCardProps) {
           {work.assignmentName}
         </p>
 
-        {/* Badges - fixed height for up to 3 badges (2 rows) */}
-        <div className="mt-2 flex flex-wrap gap-1 h-[3.5rem]">
+        {/* Badges - fixed height for up to 3 badges */}
+        <div className="mt-1.5 flex flex-wrap gap-0.5 h-[2.75rem]">
           {work.badges.map((badge) => (
             <span
               key={badge.id}
-              className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800"
+              className="inline-flex items-center rounded-full bg-yellow-100 px-1.5 py-0 text-[10px] font-medium text-yellow-800 leading-tight"
             >
               ⭐ {badge.name}
             </span>
