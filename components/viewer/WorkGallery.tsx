@@ -51,7 +51,7 @@ export default function WorkGallery({
     <div>
       {/* Grid */}
       <div
-        className="grid gap-4 items-start"
+        className={`grid items-start ${columns === 8 ? "gap-2" : "gap-4"}`}
         style={{
           gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
         }}
