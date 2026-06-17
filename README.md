@@ -101,3 +101,35 @@ node dist/cli.js <入力フォルダ> [オプション]
 - Supabase (PostgreSQL + Storage + Auth)
 - Vercel (デプロイ先)
 - Ghostscript (.ai変換) / sharp + ag-psd (.psd変換)
+
+## ルーティング構成
+
+```
+/                     → 閲覧ページ（ギャラリー、認証不要）
+/auth/login           → ログインページ
+/admin/dashboard      → 管理ダッシュボード（認証必須）
+/admin/upload         → 単体アップロード
+/admin/bulk-upload    → 一括アップロード
+/admin/students       → 学生管理 + CSVインポート
+/admin/assignments    → 課題管理
+/admin/courses        → コース管理
+/admin/badges         → バッジ管理
+/api/works            → 作品一覧API（公開）
+/api/assignments      → 課題一覧API（公開）
+/api/badges/types     → バッジ種別API（公開）
+/api/uploads/*        → アップロードAPI（認証必須）
+/api/students/*       → 学生API（認証必須）
+/api/courses          → コースAPI（認証必須）
+/api/badges           → バッジ付与/削除API（認証必須）
+```
+
+未認証で `/admin/*` にアクセスすると自動的に `/auth/login` にリダイレクトされます。
+
+## Vercelデプロイ
+
+1. VercelでGitHubリポジトリをインポート
+2. 環境変数を設定:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+3. Supabaseダッシュボードの Authentication > URL Configuration に本番ドメインを追加

@@ -196,6 +196,15 @@ Adobe Portfolio Viewerの実装計画。Next.js 14 (App Router) + Supabase (Post
     - fast-checkで同一学生×課題の重複アップロード検知を検証する
     - **Validates: Requirements 9.4**
 
+  - [ ] 8.5 バルクアップロード逐次送信対応（Vercelデプロイ対応）【優先度高】
+    - Vercel Serverless Functionsのボディサイズ制限（4.5MB）に対応するため、バルクアップロードをクライアント側で1ファイルずつ逐次送信する方式に変更する
+    - `app/(admin)/bulk-upload/page.tsx`: FormDataで全ファイル一括送信 → 1ファイルずつ `/api/uploads/single` にPOSTするループ処理に変更
+    - リアルタイム進捗表示（処理済みファイル数/全ファイル数、現在処理中のファイル名）
+    - 失敗ファイルは記録して続行（continue-on-error）
+    - 完了後にサマリー表示（成功件数、失敗件数、失敗ファイル一覧と理由）
+    - `/api/uploads/bulk/route.ts` は削除またはリダイレクト用に残す
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9_
+
 - [~] 9. チェックポイント - アップロード機能の検証
   - Ensure all tests pass, ask the user if questions arise.
 
