@@ -5,6 +5,7 @@ import WorkCard from "./WorkCard";
 
 interface WorkGalleryProps {
   works: WorkItem[];
+  columns?: 4 | 6 | 8;
   hasMore: boolean;
   loading: boolean;
   onLoadMore: () => void;
@@ -13,6 +14,7 @@ interface WorkGalleryProps {
 
 export default function WorkGallery({
   works,
+  columns = 4,
   hasMore,
   loading,
   onLoadMore,
@@ -48,7 +50,12 @@ export default function WorkGallery({
   return (
     <div>
       {/* Grid */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 items-start">
+      <div
+        className="grid gap-4 items-start"
+        style={{
+          gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+        }}
+      >
         {works.map((work) => (
           <WorkCard
             key={work.id}

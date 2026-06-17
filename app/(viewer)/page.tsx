@@ -27,6 +27,7 @@ export default function ViewerPage() {
   const [selectedAssignments, setSelectedAssignments] = useState<string[]>([]);
   const [selectedBadges, setSelectedBadges] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState("random");
+  const [columns, setColumns] = useState<4 | 6 | 8>(4);
 
   // Filter options (fetched from API)
   const [studentOptions, setStudentOptions] = useState<FilterOption[]>([]);
@@ -233,14 +234,32 @@ export default function ViewerPage() {
 
           {/* Main content */}
           <div className="flex-1">
-            {/* Result count */}
-            <div className="mb-4">
+            {/* Result count + display options */}
+            <div className="mb-4 flex items-center justify-between">
               <ResultCount total={total} filtered={hasActiveFilters} />
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">表示列数:</span>
+                {([4, 6, 8] as const).map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setColumns(n)}
+                    className={`px-2 py-1 text-xs rounded border ${
+                      columns === n
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white text-gray-600 border-gray-300 hover:border-gray-400"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Gallery */}
             <WorkGallery
               works={works}
+              columns={columns}
               hasMore={page < totalPages}
               loading={loading}
               onLoadMore={handleLoadMore}
