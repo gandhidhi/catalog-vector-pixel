@@ -7,7 +7,7 @@
 | コンポーネント | 説明 | URL |
 |--------------|------|-----|
 | 閲覧フロントエンド | 学生が作品を閲覧するページ（認証不要） | http://localhost:3000 |
-| 管理フロントエンド | 教員がアップロード・バッジ付与を行うページ（認証必須） | http://localhost:3000/admin |
+| 管理フロントエンド | 教員がアップロード・バッジ付与を行うページ（認証必須） | http://localhost:3000/auth/login |
 | 変換ツール (Web UI) | .ai/.psd → PNG 変換をGUIで操作 | http://localhost:3001 |
 | 変換ツール (CLI) | .ai/.psd → PNG 変換をコマンドラインで実行 | — |
 
@@ -40,13 +40,6 @@ npm run dev
 
 - 閲覧ページ: http://localhost:3000
 - ログイン: http://localhost:3000/auth/login
-- 管理ダッシュボード: http://localhost:3000/admin/dashboard
-- 単体アップロード: http://localhost:3000/admin/upload
-- 一括アップロード: http://localhost:3000/admin/bulk-upload
-- 学生管理: http://localhost:3000/admin/students
-- 課題管理: http://localhost:3000/admin/assignments
-- コース管理: http://localhost:3000/admin/courses
-- バッジ管理: http://localhost:3000/admin/badges
 
 ### 2. 変換ツール (Web UI モード)
 
