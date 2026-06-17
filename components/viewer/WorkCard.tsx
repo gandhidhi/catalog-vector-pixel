@@ -59,19 +59,17 @@ export default function WorkCard({ work, onClick }: WorkCardProps) {
           {work.assignmentName}
         </p>
 
-        {/* Badges */}
-        {work.badges.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1">
-            {work.badges.map((badge) => (
-              <span
-                key={badge.id}
-                className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800"
-              >
-                ⭐ {badge.name}
-              </span>
-            ))}
-          </div>
-        )}
+        {/* Badges - always reserve space */}
+        <div className="mt-2 flex flex-wrap gap-1 min-h-[1.5rem]">
+          {work.badges.map((badge) => (
+            <span
+              key={badge.id}
+              className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800"
+            >
+              ⭐ {badge.name}
+            </span>
+          ))}
+        </div>
       </div>
     </button>
   );
