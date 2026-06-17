@@ -60,11 +60,11 @@ export default function WorkCard({ work, onClick }: WorkCardProps) {
         </p>
 
         {/* Badges - fixed height for up to 3 badges */}
-        <div className="mt-1.5 flex flex-wrap gap-0.5 h-[2.75rem]">
+        <div className="mt-1.5 flex flex-wrap gap-0.5 h-[2.75rem] content-start items-start">
           {work.badges.map((badge) => (
             <span
               key={badge.id}
-              className="inline-flex items-center rounded-full bg-yellow-100 px-1.5 py-0 text-[10px] font-medium text-yellow-800 leading-tight"
+              className="inline-flex items-center rounded-full bg-yellow-100 px-1.5 text-[10px] font-medium text-yellow-800 h-[1.2rem]"
             >
               ⭐ {badge.name}
             </span>
