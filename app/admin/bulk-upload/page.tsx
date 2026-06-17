@@ -1,7 +1,17 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import type { Assignment, BulkUploadResult } from "@/lib/types";
+import type { Assignment, BulkUploadFailureReason } from "@/lib/types";
+import { parseFilename } from "@/lib/validators/filename";
+import { validatePngFile } from "@/lib/validators/upload";
+
+interface BulkResult {
+  totalFiles: number;
+  successCount: number;
+  failureCount: number;
+  successes: { filename: string; studentName: string }[];
+  failures: { filename: string; reason: string }[];
+}
 
 export default function BulkUploadPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -13,10 +23,14 @@ export default function BulkUploadPage() {
   const [files, setFiles] = useState<File[]>([]);
 
   // Progress state
-  const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
+  const [progress, setProgress] = useState<{
+    current: number;
+    total: number;
+    currentFilename: string;
+  } | null>(null);
 
   // Result state
-  const [result, setResult] = useState<BulkUploadResult | null>(null);
+  const [result, setResult] = useState<BulkResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -52,7 +66,6 @@ export default function BulkUploadPage() {
 
     if (!selectedAssignmentId || files.length === 0) return;
 
-    // クライアント側の最大ファイル数チェック
     if (files.length > 150) {
       setError("一度にアップロードできるファイルは最大150件です");
       return;
@@ -61,47 +74,89 @@ export default function BulkUploadPage() {
     setUploading(true);
     setError(null);
     setResult(null);
-    setProgress({ current: 0, total: files.length });
 
-    try {
-      const formData = new FormData();
-      formData.append("assignmentId", selectedAssignmentId);
-      files.forEach((file) => {
-        formData.append("files", file);
-      });
+    const successes: BulkResult["successes"] = [];
+    const failures: BulkResult["failures"] = [];
 
-      // 進捗はサーバー側で一括処理されるため、送信開始を表示
-      setProgress({ current: 0, total: files.length });
+    // 逐次送信: 1ファイルずつ /api/uploads/single に送信
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      setProgress({ current: i, total: files.length, currentFilename: file.name });
 
-      const res = await fetch("/api/uploads/bulk", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "アップロードに失敗しました");
-        setProgress(null);
-        return;
+      // クライアント側バリデーション
+      const validation = validatePngFile({ name: file.name, size: file.size });
+      if (!validation.valid) {
+        const reason = file.name.toLowerCase().endsWith(".png")
+          ? "FILE_TOO_LARGE"
+          : "INVALID_FORMAT";
+        failures.push({ filename: file.name, reason });
+        continue;
       }
 
-      // 完了
-      setResult(data as BulkUploadResult);
-      setProgress({ current: data.totalFiles, total: data.totalFiles });
-
-      // フォームリセット
-      setFiles([]);
-      setSelectedAssignmentId("");
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+      // ファイル名パース（学籍番号抽出）
+      const parsed = parseFilename(file.name);
+      if (!parsed) {
+        failures.push({ filename: file.name, reason: "FILENAME_PATTERN_MISMATCH" });
+        continue;
       }
-    } catch {
-      setError("通信エラーが発生しました。再度お試しください");
-      setProgress(null);
-    } finally {
-      setUploading(false);
+
+      // 学籍番号からstudent UUIDを取得
+      try {
+        const studentRes = await fetch(
+          `/api/students/lookup?studentId=${encodeURIComponent(parsed.studentId)}`,
+        );
+
+        if (!studentRes.ok) {
+          failures.push({ filename: file.name, reason: "STUDENT_NOT_FOUND" });
+          continue;
+        }
+
+        const studentData = await studentRes.json();
+        const studentUuid = studentData.student.id;
+        const studentName = studentData.student.name;
+
+        // 単体アップロードAPIに送信
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("studentId", studentUuid);
+        formData.append("assignmentId", selectedAssignmentId);
+        formData.append("overwrite", "true");
+
+        const uploadRes = await fetch("/api/uploads/single", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (uploadRes.ok) {
+          successes.push({ filename: file.name, studentName });
+        } else {
+          const uploadData = await uploadRes.json();
+          failures.push({
+            filename: file.name,
+            reason: uploadData.error || "STORAGE_ERROR",
+          });
+        }
+      } catch {
+        failures.push({ filename: file.name, reason: "STORAGE_ERROR" });
+      }
     }
+
+    // 完了
+    setProgress({ current: files.length, total: files.length, currentFilename: "" });
+    setResult({
+      totalFiles: files.length,
+      successCount: successes.length,
+      failureCount: failures.length,
+      successes,
+      failures,
+    });
+
+    // フォームリセット
+    setFiles([]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    setUploading(false);
   }
 
   if (loading) {
@@ -121,6 +176,7 @@ export default function BulkUploadPage() {
         <h2 className="text-2xl font-bold text-gray-900">バルクアップロード</h2>
         <p className="mt-1 text-sm text-gray-500">
           変換済みPNGファイルを一括でアップロードし、ファイル名から学生に自動紐づけします。
+          1ファイルずつ逐次送信するため、大量ファイルでも安定して動作します。
         </p>
       </div>
 
@@ -135,7 +191,7 @@ export default function BulkUploadPage() {
           </code>
         </p>
         <p className="text-xs text-blue-600 mt-1">
-          例: <code className="font-mono">12345001_黒須哲郎.png</code>
+          例: <code className="font-mono">12345001_黒須哲郎.png</code>（氏名にスペースがあってもOK）
         </p>
       </div>
 
@@ -152,7 +208,6 @@ export default function BulkUploadPage() {
         )}
 
         <form onSubmit={handleUpload} className="space-y-4">
-          {/* 課題選択 */}
           <div>
             <label
               htmlFor="assignment-select"
@@ -176,7 +231,6 @@ export default function BulkUploadPage() {
             </select>
           </div>
 
-          {/* ファイル選択（複数） */}
           <div>
             <label
               htmlFor="files-input"
@@ -201,7 +255,6 @@ export default function BulkUploadPage() {
             )}
           </div>
 
-          {/* アップロードボタン */}
           <button
             type="submit"
             disabled={uploading || files.length === 0 || !selectedAssignmentId}
@@ -229,8 +282,10 @@ export default function BulkUploadPage() {
               {progress.current} / {progress.total}
             </span>
           </div>
-          {uploading && (
-            <p className="mt-2 text-sm text-gray-500">処理中...</p>
+          {uploading && progress.currentFilename && (
+            <p className="mt-2 text-sm text-gray-500">
+              処理中: <span className="font-mono text-xs">{progress.currentFilename}</span>
+            </p>
           )}
         </div>
       )}
@@ -242,7 +297,6 @@ export default function BulkUploadPage() {
             アップロード結果
           </h3>
 
-          {/* 成功/失敗サマリー */}
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="text-center p-3 bg-gray-50 rounded-lg">
               <p className="text-2xl font-bold text-gray-900">{result.totalFiles}</p>
@@ -258,7 +312,6 @@ export default function BulkUploadPage() {
             </div>
           </div>
 
-          {/* 成功リスト */}
           {result.successes.length > 0 && (
             <div className="mb-4">
               <h4 className="text-sm font-medium text-green-700 mb-2">
@@ -279,7 +332,6 @@ export default function BulkUploadPage() {
             </div>
           )}
 
-          {/* 失敗リスト */}
           {result.failures.length > 0 && (
             <div>
               <h4 className="text-sm font-medium text-red-700 mb-2">
@@ -324,6 +376,6 @@ function getFailureReasonLabel(reason: string): string {
     case "STORAGE_ERROR":
       return "ストレージ保存エラー";
     default:
-      return "不明なエラー";
+      return reason;
   }
 }
