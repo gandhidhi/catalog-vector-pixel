@@ -364,9 +364,9 @@ function WorkBadgeCard({
   const isAtLimit = work.badges.length >= 3;
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
+    <div className="border border-gray-200 rounded-lg">
       {/* Thumbnail */}
-      <div className="aspect-square bg-gray-100 relative">
+      <div className="aspect-square bg-gray-100 relative overflow-hidden rounded-t-lg">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={work.imageUrl}
@@ -425,7 +425,7 @@ function WorkBadgeCard({
 
           {/* Badge picker dropdown */}
           {showBadgePicker && (
-            <div className="absolute z-10 mt-1 left-0 w-full bg-white border border-gray-200 rounded-md shadow-lg py-1">
+            <div className="absolute z-50 bottom-full mb-1 left-0 w-full bg-white border border-gray-200 rounded-md shadow-lg py-1">
               {badgeTypes.length === 0 ? (
                 <p className="px-3 py-2 text-xs text-gray-500">
                   バッジ種別が登録されていません
