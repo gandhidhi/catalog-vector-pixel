@@ -156,13 +156,14 @@ export async function GET(request: NextRequest) {
 
   // 取得した作品のバッジ情報を一括取得
   const workIds = (worksData ?? []).map((w) => w.id);
-  let badgesMap: Record<string, { id: string; name: string }[]> = {};
+  let badgesMap: Record<string, { id: string; badgeTypeId: string; name: string }[]> = {};
 
   if (workIds.length > 0) {
     const { data: workBadgesData, error: workBadgesError } = await supabase
       .from("work_badges")
       .select(
         `
+        id,
         work_id,
         badge_types!inner (id, name)
       `,
@@ -187,7 +188,7 @@ export async function GET(request: NextRequest) {
         name: string;
       };
       if (badgeType) {
-        badgesMap[workId].push({ id: badgeType.id, name: badgeType.name });
+        badgesMap[workId].push({ id: row.id, badgeTypeId: badgeType.id, name: badgeType.name });
       }
     }
   }

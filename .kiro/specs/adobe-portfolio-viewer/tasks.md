@@ -199,8 +199,8 @@ Adobe Portfolio Viewerの実装計画。Next.js 14 (App Router) + Supabase (Post
 - [~] 9. チェックポイント - アップロード機能の検証
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 10. 閲覧ページ実装
-  - [~] 10.1 作品一覧ページ（ギャラリー）実装
+- [x] 10. 閲覧ページ実装
+  - [x] 10.1 作品一覧ページ（ギャラリー）実装
     - `app/(viewer)/page.tsx`: SSG/ISRでグリッド形式のサムネイル一覧表示
     - `components/viewer/WorkGallery.tsx`: グリッドレイアウト
     - `components/viewer/WorkCard.tsx`: サムネイルカード（学生名、課題名、バッジ表示）
@@ -232,7 +232,7 @@ Adobe Portfolio Viewerの実装計画。Next.js 14 (App Router) + Supabase (Post
     - fast-checkで複数フィルター条件のAND結合の正確性を検証する
     - **Validates: Requirements 6.1, 6.2, 6.3, 6.4, 6.6**
 
-  - [~] 10.6 フィルタリングUI実装
+  - [x] 10.6 フィルタリングUI実装
     - `components/viewer/FilterPanel.tsx`: 学生フィルター、課題フィルター、バッジフィルター
     - `components/viewer/FilterBadge.tsx`: 適用中フィルターのバッジ表示
     - `components/viewer/ResultCount.tsx`: フィルター適用後の件数表示
@@ -240,12 +240,12 @@ Adobe Portfolio Viewerの実装計画。Next.js 14 (App Router) + Supabase (Post
     - フィルター結果0件時のメッセージ表示
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7_
 
-  - [~] 10.7 作品拡大表示モーダル実装
+  - [x] 10.7 作品拡大表示モーダル実装
     - `components/viewer/WorkModal.tsx`: ビューポート幅最大90%、アスペクト比維持
     - 閉じるボタンと画像外領域クリックで閉じる
     - _Requirements: 5.3_
 
-- [ ] 11. バッジシステム実装
+- [x] 11. バッジシステム実装
   - [x] 11.1 バッジ付与・削除API実装
     - `app/api/badges/route.ts`: POST（バッジ付与、認証必須）
     - 付与上限チェック（1作品最大3個）
@@ -259,15 +259,15 @@ Adobe Portfolio Viewerの実装計画。Next.js 14 (App Router) + Supabase (Post
     - fast-checkで1作品あたりのバッジ数≤3、重複なし、3個超過時の拒否を検証する
     - **Validates: Requirements 7.2, 7.6**
 
-  - [~] 11.3 バッジ管理UI実装
+  - [x] 11.3 バッジ管理UI実装
     - `app/(admin)/badges/page.tsx`: 作品一覧から選択→バッジ付与/削除UI
     - 定義済みバッジ一覧からの選択インターフェース
     - 2秒以内の反映（楽観的UI更新）
     - バッジ上限エラーメッセージ表示
     - _Requirements: 7.1, 7.3, 7.4, 7.5, 7.6_
 
-- [ ] 12. 管理ダッシュボード
-  - [~] 12.1 管理ダッシュボードページ実装
+- [x] 12. 管理ダッシュボード
+  - [x] 12.1 管理ダッシュボードページ実装
     - `app/(admin)/dashboard/page.tsx`: 登録学生数、課題数、アップロード済み作品数、バッジ付与数のサマリー表示
     - 各管理機能（アップロード、バルクアップロード、学生管理、課題管理、バッジ管理）へのナビゲーション
     - _Requirements: 1.2_

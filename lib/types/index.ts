@@ -89,7 +89,7 @@ export interface WorkItem {
   assignmentNumber: number;
   imageUrl: string;
   uploadedAt: string;
-  badges: { id: string; name: string }[];
+  badges: { id: string; badgeTypeId: string; name: string }[];
 }
 
 // ============================================================
