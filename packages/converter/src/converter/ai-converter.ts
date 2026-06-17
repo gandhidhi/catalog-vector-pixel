@@ -39,10 +39,11 @@ export async function checkGhostscriptInstalled(): Promise<boolean> {
  * GhostscriptでAIファイルをPNGに変換する
  *
  * @param inputPath - 変換対象の.aiファイルパス
+ * @param resolution - Ghostscript解像度 (dpi)。デフォルト 300
  * @returns 変換後のPNGデータ（Buffer）
  * @throws Ghostscript未インストール時、変換失敗時、タイムアウト時にエラーをスロー
  */
-export async function convertAiToPng(inputPath: string): Promise<Buffer> {
+export async function convertAiToPng(inputPath: string, resolution: number = 300): Promise<Buffer> {
   const tempOutputPath = join(tmpdir(), `ai-convert-${randomUUID()}.png`);
 
   try {
@@ -52,7 +53,7 @@ export async function convertAiToPng(inputPath: string): Promise<Buffer> {
         "-dNOPAUSE",
         "-dBATCH",
         "-sDEVICE=pngalpha",
-        "-r150",
+        `-r${resolution}`,
         `-sOutputFile=${tempOutputPath}`,
         inputPath,
       ],

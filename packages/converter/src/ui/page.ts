@@ -234,8 +234,18 @@ export function getHtmlPage(): string {
       <div id="errorBanner" class="error-banner"></div>
       <form id="convertForm">
         <div class="form-group">
-          <label for="inputDir">入力フォルダパス</label>
-          <input type="text" id="inputDir" placeholder="/Users/your-name/Desktop/submissions" required>
+          <label for="inputDir">入力フォルダ</label>
+          <div style="display:flex;gap:0.5rem;">
+            <input type="text" id="inputDir" placeholder="フォルダを選択してください" required style="flex:1;">
+            <button type="button" class="btn btn-primary" style="padding:0.6rem 1rem;white-space:nowrap;" onclick="pickFolder('inputDir')">📁 選択</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="outputDir">出力フォルダ</label>
+          <div style="display:flex;gap:0.5rem;">
+            <input type="text" id="outputDir" placeholder="デフォルト: 入力フォルダ/converted" style="flex:1;">
+            <button type="button" class="btn btn-primary" style="padding:0.6rem 1rem;white-space:nowrap;" onclick="pickFolder('outputDir')">📁 選択</button>
+          </div>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -243,18 +253,23 @@ export function getHtmlPage(): string {
             <input type="number" id="assignment" min="1" max="7" placeholder="例: 1">
           </div>
           <div class="form-group">
-            <label for="outputDir">出力フォルダ (任意)</label>
-            <input type="text" id="outputDir" placeholder="デフォルト: 入力フォルダ/converted">
+            <label for="resolution">解像度</label>
+            <select id="resolution" style="width:100%;padding:0.6rem 0.8rem;border:1px solid #d2d2d7;border-radius:8px;font-size:0.9rem;outline:none;background:white;">
+              <option value="150">標準 (150 dpi) — 軽量、Web閲覧向け</option>
+              <option value="200">やや高画質 (200 dpi)</option>
+              <option value="300" selected>高画質 (300 dpi) — 推奨</option>
+              <option value="600">超高画質 (600 dpi) — 大きめ</option>
+            </select>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label for="maxSize">最大ファイルサイズ (KB)</label>
-            <input type="number" id="maxSize" value="500" min="100">
+            <input type="number" id="maxSize" value="1000" min="100">
           </div>
           <div class="form-group">
             <label for="maxWidth">最大長辺 (px)</label>
-            <input type="number" id="maxWidth" value="1280" min="100">
+            <input type="number" id="maxWidth" value="2048" min="100">
           </div>
         </div>
         <button type="submit" class="btn btn-primary" id="submitBtn">変換開始</button>
@@ -328,6 +343,20 @@ export function getHtmlPage(): string {
       }
     })();
 
+    // Folder picker using server-side dialog API
+    async function pickFolder(targetInputId) {
+      try {
+        const res = await fetch('/api/pick-folder');
+        const data = await res.json();
+        if (data.path) {
+          document.getElementById(targetInputId).value = data.path;
+        }
+      } catch {
+        // Fallback: prompt user to type manually
+        alert('フォルダ選択ダイアログを開けませんでした。パスを直接入力してください。');
+      }
+    }
+
     function addLog(message, type) {
       const entry = document.createElement('div');
       entry.className = 'log-entry ' + (type || 'info');
@@ -382,8 +411,9 @@ export function getHtmlPage(): string {
       const body = {
         inputDir,
         outputDir: document.getElementById('outputDir').value.trim() || undefined,
-        maxSize: parseInt(document.getElementById('maxSize').value) || 500,
-        maxWidth: parseInt(document.getElementById('maxWidth').value) || 1280,
+        maxSize: parseInt(document.getElementById('maxSize').value) || 1000,
+        maxWidth: parseInt(document.getElementById('maxWidth').value) || 2048,
+        resolution: parseInt(document.getElementById('resolution').value) || 300,
         assignment: parseInt(document.getElementById('assignment').value) || undefined,
       };
 

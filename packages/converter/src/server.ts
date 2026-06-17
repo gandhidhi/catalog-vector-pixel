@@ -30,6 +30,7 @@ interface ConvertRequest {
   outputDir?: string;
   maxSize?: number;
   maxWidth?: number;
+  resolution?: number;
   assignment?: number;
 }
 
@@ -116,8 +117,9 @@ async function handleConvert(req: IncomingMessage, res: ServerResponse): Promise
   const outputDir = body.outputDir
     ? resolve(body.outputDir)
     : join(resolvedInputDir, "converted");
-  const maxSizeBytes = (body.maxSize ?? 500) * 1024;
-  const maxWidth = body.maxWidth ?? 1280;
+  const maxSizeBytes = (body.maxSize ?? 1000) * 1024;
+  const maxWidth = body.maxWidth ?? 2048;
+  const resolution = body.resolution ?? 300;
 
   // Preflight checks
   sendEvent("status", { message: "プリフライトチェック中..." });
@@ -203,7 +205,7 @@ async function handleConvert(req: IncomingMessage, res: ServerResponse): Promise
       let pngBuffer: Buffer;
 
       if (ext === ".ai") {
-        pngBuffer = await convertAiToPng(inputPath);
+        pngBuffer = await convertAiToPng(inputPath, resolution);
       } else if (ext === ".psd") {
         pngBuffer = await convertPsdToPng(inputPath);
       } else {
@@ -316,6 +318,43 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
   if (url === "/api/check-gs" && method === "GET") {
     const installed = await checkGhostscriptInstalled();
     sendJson(res, 200, { installed });
+    return;
+  }
+
+  if (url === "/api/pick-folder" && method === "GET") {
+    // macOSのosascriptでフォルダ選択ダイアログを表示
+    const os = platform();
+    if (os === "darwin") {
+      try {
+        const { stdout } = await new Promise<{ stdout: string; stderr: string }>(
+          (resolve, reject) => {
+            exec(
+              'osascript -e \'choose folder with prompt "フォルダを選択してください"\' 2>/dev/null',
+              (err, stdout, stderr) => {
+                if (err) reject(err);
+                else resolve({ stdout, stderr });
+              },
+            );
+          },
+        );
+        // osascript returns "alias Macintosh HD:Users:..." format, convert to POSIX path
+        const aliasPath = stdout.trim();
+        if (aliasPath.startsWith("alias ")) {
+          const hfsPath = aliasPath.replace("alias ", "").replace(/:/g, "/");
+          // Remove volume name prefix and add leading /
+          const parts = hfsPath.split("/");
+          const posixPath = "/" + parts.slice(1).join("/");
+          sendJson(res, 200, { path: posixPath });
+        } else {
+          sendJson(res, 200, { path: null });
+        }
+      } catch {
+        sendJson(res, 200, { path: null });
+      }
+    } else {
+      // Linux/Windows: フォルダ選択ダイアログはサポートしない（パス手入力で対応）
+      sendJson(res, 200, { path: null });
+    }
     return;
   }
 
