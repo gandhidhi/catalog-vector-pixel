@@ -51,6 +51,12 @@ export default async function AdminLayout({
                   課題管理
                 </a>
                 <a
+                  href="/admin/courses"
+                  className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-md hover:bg-gray-100"
+                >
+                  コース管理
+                </a>
+                <a
                   href="/admin/badges"
                   className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-md hover:bg-gray-100"
                 >

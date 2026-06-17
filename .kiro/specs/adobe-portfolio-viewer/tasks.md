@@ -75,20 +75,20 @@ Adobe Portfolio Viewerの実装計画。Next.js 14 (App Router) + Supabase (Post
     - fast-checkで60分経過判定の正確性を検証する
     - **Validates: Requirements 1.6**
 
-- [ ] 4. マスターデータ管理API・UI
-  - [~] 4.1 コース管理API・UI実装
+- [x] 4. マスターデータ管理API・UI
+  - [x] 4.1 コース管理API・UI実装
     - `app/api/courses/route.ts`: GET（一覧取得）、POST（コース登録、プレフィックス5桁数字バリデーション）
     - `app/(admin)/courses/page.tsx`（または`students`ページ内に統合）: コース登録・一覧表示UI
     - _Requirements: 8.3_
 
-  - [~] 4.2 学生管理API・UI実装
+  - [x] 4.2 学生管理API・UI実装
     - `app/api/students/route.ts`: GET（一覧取得）、POST（学生登録、学籍番号8桁・氏名1〜50文字バリデーション）
     - 学生レコード作成時にstudent_idの先頭5桁からcourse_idを自動紐づけ
     - `app/(admin)/students/page.tsx`: 学生登録フォーム・一覧表示UI
     - コース未紐づけの通知表示
     - _Requirements: 8.1, 8.5, 8.9_
 
-  - [~] 4.3 学生CSVインポートAPI実装
+  - [x] 4.3 学生CSVインポートAPI実装
     - `app/api/students/import/route.ts`: POST（CSVファイルアップロード）
     - BOM付きUTF-8対応（先頭`\uFEFF`自動除去）
     - 必須カラム検証（「学籍番号」「学生氏名」）、余分カラム自動無視
@@ -103,7 +103,7 @@ Adobe Portfolio Viewerの実装計画。Next.js 14 (App Router) + Supabase (Post
     - fast-checkで成功行数 + エラー行数 = 全行数を検証する
     - **Validates: Requirements 8.6**
 
-  - [~] 4.5 課題管理API・UI実装
+  - [x] 4.5 課題管理API・UI実装
     - `app/api/assignments/route.ts`: GET（一覧取得）、POST（課題登録、番号1〜7・名前1〜100文字バリデーション）
     - 重複課題番号の拒否
     - `app/(admin)/assignments/page.tsx`: 課題登録フォーム・一覧表示UI
@@ -113,7 +113,7 @@ Adobe Portfolio Viewerの実装計画。Next.js 14 (App Router) + Supabase (Post
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 6. ローカル変換ツール実装
-  - [~] 6.1 変換ツール基盤実装
+  - [x] 6.1 変換ツール基盤実装
     - `packages/converter/src/converter/image-processor.ts`: sharpによるリサイズ（長辺1280px以下）＋圧縮（500KB以下）
     - `packages/converter/src/validators/filename.ts`: ファイル名バリデーション＋修正候補提示
     - 変換対象ファイルのフィルタリング（`.ai`/`.psd`のみ、それ以外スキップ）
@@ -134,12 +134,12 @@ Adobe Portfolio Viewerの実装計画。Next.js 14 (App Router) + Supabase (Post
     - fast-checkで`.ai`/`.psd`のみが変換対象として検出されることを検証する
     - **Validates: Requirements 4.10**
 
-  - [~] 6.5 AIファイル変換（Ghostscript）実装
+  - [x] 6.5 AIファイル変換（Ghostscript）実装
     - `packages/converter/src/converter/ai-converter.ts`: Ghostscriptプロセス呼び出し（タイムアウト60秒）
     - Ghostscript未インストール時のエラーメッセージ＋インストール手順表示
     - _Requirements: 4.3, 4.12_
 
-  - [~] 6.6 PSDファイル変換（ag-psd + sharp）実装
+  - [x] 6.6 PSDファイル変換（ag-psd + sharp）実装
     - `packages/converter/src/converter/psd-converter.ts`: ag-psdでレイヤー統合→Bufferデータ取得
     - sharpでPNG変換
     - _Requirements: 4.4_
