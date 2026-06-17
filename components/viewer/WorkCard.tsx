@@ -59,8 +59,8 @@ export default function WorkCard({ work, onClick }: WorkCardProps) {
           {work.assignmentName}
         </p>
 
-        {/* Badges - always reserve space */}
-        <div className="mt-2 flex flex-wrap gap-1 min-h-[1.5rem]">
+        {/* Badges - fixed height for up to 3 badges (2 rows) */}
+        <div className="mt-2 flex flex-wrap gap-1 h-[3.5rem]">
           {work.badges.map((badge) => (
             <span
               key={badge.id}
