@@ -4,7 +4,7 @@
 export { type ConversionOptions, type ConversionResult, type ConversionSummary } from "./types.js";
 
 // Image processor
-export { resizeAndCompress, type ImageProcessorResult } from "./converter/image-processor.js";
+export { resizeAndCompress, type ImageProcessorResult, type BackgroundOption } from "./converter/image-processor.js";
 
 // File filter
 export { filterConvertibleFiles, type FilterResult } from "./converter/file-filter.js";

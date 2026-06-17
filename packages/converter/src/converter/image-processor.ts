@@ -6,21 +6,30 @@ export interface ImageProcessorResult {
   height: number;
 }
 
+export type BackgroundOption = "transparent" | "white";
+
 /**
  * sharpによる画像リサイズ＋圧縮処理
  * - 長辺が maxLongSide を超える場合、アスペクト比を維持してリサイズ
  * - PNG圧縮で maxSizeBytes 以下に収める
+ * - background: "white" の場合、透過部分を白背景に合成する
  */
 export async function resizeAndCompress(
   input: Buffer,
   maxLongSide: number = 1280,
   maxSizeBytes: number = 512_000,
+  background: BackgroundOption = "transparent",
 ): Promise<ImageProcessorResult> {
   let pipeline = sharp(input);
   const metadata = await pipeline.metadata();
 
   const originalWidth = metadata.width ?? 0;
   const originalHeight = metadata.height ?? 0;
+
+  // 白背景合成: 透過PNGの背景を白にする
+  if (background === "white") {
+    pipeline = pipeline.flatten({ background: { r: 255, g: 255, b: 255 } });
+  }
 
   // 長辺がmaxLongSideを超える場合のみリサイズ
   const longSide = Math.max(originalWidth, originalHeight);

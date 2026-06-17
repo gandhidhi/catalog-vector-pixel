@@ -18,7 +18,7 @@ import { platform } from "node:os";
 
 import { checkGhostscriptInstalled, convertAiToPng } from "./converter/ai-converter.js";
 import { convertPsdToPng } from "./converter/psd-converter.js";
-import { resizeAndCompress } from "./converter/image-processor.js";
+import { resizeAndCompress, type BackgroundOption } from "./converter/image-processor.js";
 import { filterConvertibleFiles } from "./converter/file-filter.js";
 import { parse, suggestCorrection } from "./validators/filename.js";
 import { getHtmlPage } from "./ui/page.js";
@@ -31,6 +31,7 @@ interface ConvertRequest {
   maxSize?: number;
   maxWidth?: number;
   resolution?: number;
+  background?: "transparent" | "white";
   assignment?: number;
 }
 
@@ -120,6 +121,7 @@ async function handleConvert(req: IncomingMessage, res: ServerResponse): Promise
   const maxSizeBytes = (body.maxSize ?? 1000) * 1024;
   const maxWidth = body.maxWidth ?? 2048;
   const resolution = body.resolution ?? 300;
+  const background = body.background ?? "transparent";
 
   // Preflight checks
   sendEvent("status", { message: "プリフライトチェック中..." });
@@ -213,7 +215,7 @@ async function handleConvert(req: IncomingMessage, res: ServerResponse): Promise
       }
 
       // Resize and compress
-      const processed = await resizeAndCompress(pngBuffer, maxWidth, maxSizeBytes);
+      const processed = await resizeAndCompress(pngBuffer, maxWidth, maxSizeBytes, background);
 
       // Filename validation
       const parseResult = parse(filename);

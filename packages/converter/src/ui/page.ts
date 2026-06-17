@@ -249,16 +249,19 @@ export function getHtmlPage(): string {
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label for="assignment">課題番号 (任意)</label>
-            <input type="number" id="assignment" min="1" max="7" placeholder="例: 1">
-          </div>
-          <div class="form-group">
             <label for="resolution">解像度</label>
             <select id="resolution" style="width:100%;padding:0.6rem 0.8rem;border:1px solid #d2d2d7;border-radius:8px;font-size:0.9rem;outline:none;background:white;">
               <option value="150">標準 (150 dpi) — 軽量、Web閲覧向け</option>
               <option value="200">やや高画質 (200 dpi)</option>
               <option value="300" selected>高画質 (300 dpi) — 推奨</option>
               <option value="600">超高画質 (600 dpi) — 大きめ</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="background">背景</label>
+            <select id="background" style="width:100%;padding:0.6rem 0.8rem;border:1px solid #d2d2d7;border-radius:8px;font-size:0.9rem;outline:none;background:white;">
+              <option value="white" selected>白背景</option>
+              <option value="transparent">透過（透明）</option>
             </select>
           </div>
         </div>
@@ -271,6 +274,10 @@ export function getHtmlPage(): string {
             <label for="maxWidth">最大長辺 (px)</label>
             <input type="number" id="maxWidth" value="2048" min="100">
           </div>
+        </div>
+        <div class="form-group">
+          <label for="assignment">課題番号 (任意)</label>
+          <input type="number" id="assignment" min="1" max="7" placeholder="例: 1" style="max-width:200px;">
         </div>
         <button type="submit" class="btn btn-primary" id="submitBtn">変換開始</button>
       </form>
@@ -414,6 +421,7 @@ export function getHtmlPage(): string {
         maxSize: parseInt(document.getElementById('maxSize').value) || 1000,
         maxWidth: parseInt(document.getElementById('maxWidth').value) || 2048,
         resolution: parseInt(document.getElementById('resolution').value) || 300,
+        background: document.getElementById('background').value || 'white',
         assignment: parseInt(document.getElementById('assignment').value) || undefined,
       };
 
