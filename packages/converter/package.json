@@ -1,0 +1,26 @@
+{
+  "name": "@catalog-vector-pixel/converter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "convert-works": "./dist/cli.js",
+    "start-converter": "./dist/server.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src/",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "ag-psd": "^14.3.6",
+    "commander": "^12.1.0",
+    "sharp": "^0.33.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  }
+}
