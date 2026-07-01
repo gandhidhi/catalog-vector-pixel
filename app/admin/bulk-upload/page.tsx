@@ -78,10 +78,15 @@ export default function BulkUploadPage() {
     const successes: BulkResult["successes"] = [];
     const failures: BulkResult["failures"] = [];
 
-    // 逐次送信: 1ファイルずつ /api/uploads/single に送信
+    // 逐次送信: 1ファイルずつ /api/uploads/single に送信（レートリミット対策で間隔を空ける）
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       setProgress({ current: i, total: files.length, currentFilename: file.name });
+
+      // レートリミット対策: 2件目以降は500ms待機
+      if (i > 0) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
 
       // クライアント側バリデーション
       const validation = validatePngFile({ name: file.name, size: file.size });

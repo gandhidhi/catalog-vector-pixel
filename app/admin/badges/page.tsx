@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { WorkItem, WorkListResponse, Assignment } from "@/lib/types";
+import WorkModal from "@/components/viewer/WorkModal";
 
 interface BadgeTypeItem {
   id: string;
@@ -20,6 +21,8 @@ export default function BadgesPage() {
   const [selectedAssignment, setSelectedAssignment] = useState<string>("");
   const [sortBy, setSortBy] = useState<string>("student_asc");
   const [error, setError] = useState<string | null>(null);
+  const [columns, setColumns] = useState<4 | 6 | 8>(4);
+  const [selectedWork, setSelectedWork] = useState<WorkItem | null>(null);
 
   // Fetch badge types
   useEffect(() => {
@@ -158,6 +161,36 @@ export default function BadgesPage() {
             : w,
         ),
       );
+      setError("通信エラーが発生しました。再度お試しください");
+      setTimeout(() => setError(null), 3000);
+    }
+  }
+
+  // Delete work (image)
+  async function handleDeleteWork(workId: string) {
+    const work = works.find((w) => w.id === workId);
+    if (!work) return;
+
+    // Optimistic update
+    setWorks((prev) => prev.filter((w) => w.id !== workId));
+    setTotal((prev) => prev - 1);
+
+    try {
+      const res = await fetch(`/api/works/${workId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        // Revert optimistic update
+        setWorks((prev) => [...prev, work]);
+        setTotal((prev) => prev + 1);
+        setError("作品の削除に失敗しました");
+        setTimeout(() => setError(null), 3000);
+      }
+    } catch {
+      // Revert optimistic update
+      setWorks((prev) => [...prev, work]);
+      setTotal((prev) => prev + 1);
       setError("通信エラーが発生しました。再度お試しください");
       setTimeout(() => setError(null), 3000);
     }
@@ -308,6 +341,23 @@ export default function BadgesPage() {
               </span>
             )}
           </h3>
+          {/* Column switcher */}
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-gray-500 mr-1">表示列:</span>
+            {([4, 6, 8] as const).map((col) => (
+              <button
+                key={col}
+                onClick={() => setColumns(col)}
+                className={`px-2.5 py-1 text-xs font-medium rounded-md border transition-colors ${
+                  columns === col
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                {col}
+              </button>
+            ))}
+          </div>
         </div>
 
         {loading ? (
@@ -318,7 +368,10 @@ export default function BadgesPage() {
           </p>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div
+              className={`grid items-start ${columns === 8 ? "gap-2" : "gap-4"}`}
+              style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+            >
               {works.map((work) => (
                 <WorkBadgeCard
                   key={work.id}
@@ -326,6 +379,9 @@ export default function BadgesPage() {
                   badgeTypes={badgeTypes}
                   onAddBadge={handleAddBadge}
                   onRemoveBadge={handleRemoveBadge}
+                  onDeleteWork={handleDeleteWork}
+                  onImageClick={setSelectedWork}
+                  compact={columns === 8}
                 />
               ))}
             </div>
@@ -355,6 +411,14 @@ export default function BadgesPage() {
           </>
         )}
       </div>
+
+      {/* Image modal */}
+      {selectedWork && (
+        <WorkModal
+          work={selectedWork}
+          onClose={() => setSelectedWork(null)}
+        />
+      )}
     </div>
   );
 }
@@ -366,27 +430,35 @@ function WorkBadgeCard({
   badgeTypes,
   onAddBadge,
   onRemoveBadge,
+  onDeleteWork,
+  onImageClick,
+  compact,
 }: {
   work: WorkItem;
   badgeTypes: BadgeTypeItem[];
   onAddBadge: (_workId: string, _badgeTypeId: string) => void;
   onRemoveBadge: (_workId: string, _workBadgeId: string) => void;
+  onDeleteWork: (_workId: string) => void;
+  onImageClick: (_work: WorkItem) => void;
+  compact: boolean;
 }) {
   const [showBadgePicker, setShowBadgePicker] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Badge types already assigned to this work
   const assignedBadgeTypeIds = new Set(work.badges.map((b) => b.badgeTypeId));
   const isAtLimit = work.badges.length >= 3;
 
   return (
-    <div className="border border-gray-200 rounded-lg">
+    <div className="border border-gray-200 rounded-lg relative">
       {/* Thumbnail */}
       <div className="aspect-square bg-gray-100 relative overflow-hidden rounded-t-lg">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={work.imageUrl}
           alt={`${work.studentName} - ${work.assignmentName}`}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover cursor-pointer"
+          onClick={() => onImageClick(work)}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.style.display = "none";
@@ -397,14 +469,56 @@ function WorkBadgeCard({
             target.parentElement!.appendChild(placeholder);
           }}
         />
+        {/* Delete button */}
+        <button
+          onClick={() => setShowDeleteConfirm(true)}
+          className="absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center rounded-full bg-black/50 text-white hover:bg-red-600 transition-colors"
+          title="作品を削除"
+          aria-label="作品を削除"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+        </button>
       </div>
 
+      {/* Delete confirmation dialog */}
+      {showDeleteConfirm && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/40 rounded-lg">
+          <div className="bg-white rounded-md shadow-lg p-4 mx-2 text-center">
+            <p className="text-sm text-gray-700 mb-3">
+              この作品を削除しますか？
+            </p>
+            <p className="text-xs text-gray-500 mb-3">
+              関連するバッジも削除されます
+            </p>
+            <div className="flex gap-2 justify-center">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  onDeleteWork(work.id);
+                }}
+                className="px-3 py-1.5 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-md"
+              >
+                削除する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Info */}
-      <div className="p-3">
-        <p className="text-sm font-medium text-gray-900 truncate">
+      <div className={compact ? "p-2" : "p-3"}>
+        <p className={`font-medium text-gray-900 truncate ${compact ? "text-xs" : "text-sm"}`}>
           {work.studentName}
         </p>
-        <p className="text-xs text-gray-500 truncate">
+        <p className={`text-gray-500 truncate ${compact ? "text-[10px]" : "text-xs"}`}>
           課題{work.assignmentNumber}: {work.assignmentName}
         </p>
 
@@ -413,7 +527,7 @@ function WorkBadgeCard({
           {work.badges.map((badge) => (
             <span
               key={badge.id}
-              className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"
+              className={`inline-flex items-center gap-0.5 rounded-full font-medium bg-yellow-100 text-yellow-800 ${compact ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-xs"}`}
             >
               🏅 {badge.name}
               <button

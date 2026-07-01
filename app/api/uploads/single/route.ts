@@ -121,21 +121,7 @@ export async function POST(request: Request) {
     );
   }
 
-  // 重複時の上書き処理：既存ファイルとDBレコードを削除
-  if (existingWork && overwrite) {
-    // Storage から既存ファイルを削除
-    await adminClient.storage
-      .from("works")
-      .remove([existingWork.storage_path]);
-
-    // DB レコードを削除
-    await adminClient
-      .from("works")
-      .delete()
-      .eq("id", existingWork.id);
-  }
-
-  // Supabase Storage にアップロード
+  // Supabase Storage にアップロード（upsert で既存ファイルを上書き）
   const storagePath = `works/${assignmentId}/${studentId}.png`;
   const fileBuffer = Buffer.from(await file.arrayBuffer());
 
@@ -160,25 +146,30 @@ export async function POST(request: Request) {
 
   const imageUrl = urlData.publicUrl;
 
-  // DB にメタデータを登録
+  // DB にメタデータを登録（upsert: 同一学生×課題で重複時は上書き）
   const { data: work, error: dbError } = await adminClient
     .from("works")
-    .insert({
-      student_id: studentId,
-      assignment_id: assignmentId,
-      filename: file.name,
-      storage_path: storagePath,
-      image_url: imageUrl,
-      file_size: file.size,
-    })
+    .upsert(
+      {
+        student_id: studentId,
+        assignment_id: assignmentId,
+        filename: file.name,
+        storage_path: storagePath,
+        image_url: imageUrl,
+        file_size: file.size,
+      },
+      { onConflict: "student_id,assignment_id" },
+    )
     .select()
     .single();
 
   if (dbError) {
-    // ロールバック: Storageからファイルを削除
-    await adminClient.storage
-      .from("works")
-      .remove([storagePath]);
+    // ロールバック: Storageからファイルを削除（新規の場合のみ意味がある）
+    if (!existingWork) {
+      await adminClient.storage
+        .from("works")
+        .remove([storagePath]);
+    }
 
     return NextResponse.json(
       { error: "メタデータの登録に失敗しました" },
