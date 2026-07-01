@@ -54,13 +54,14 @@ export default function BadgesPage() {
     fetchAssignments();
   }, []);
 
-  // Fetch works
-  const fetchWorks = useCallback(async () => {
+  // Fetch works (append mode for "load more")
+  const fetchWorks = useCallback(async (reset = false) => {
     setLoading(true);
     setError(null);
     try {
+      const currentPage = reset ? 1 : page;
       const params = new URLSearchParams({
-        page: String(page),
+        page: String(currentPage),
         pageSize: "20",
         sortBy,
       });
@@ -70,7 +71,11 @@ export default function BadgesPage() {
       const res = await fetch(`/api/works?${params.toString()}`);
       if (!res.ok) throw new Error("作品一覧の取得に失敗しました");
       const data: WorkListResponse = await res.json();
-      setWorks(data.works);
+      if (reset) {
+        setWorks(data.works);
+      } else {
+        setWorks((prev) => [...prev, ...data.works]);
+      }
       setTotalPages(data.totalPages);
       setTotal(data.total);
     } catch (err) {
@@ -81,8 +86,12 @@ export default function BadgesPage() {
   }, [page, selectedAssignment, sortBy]);
 
   useEffect(() => {
-    fetchWorks();
+    fetchWorks(page === 1);
   }, [fetchWorks]);
+
+  function handleLoadMore() {
+    setPage((p) => p + 1);
+  }
 
   // Optimistic badge add
   async function handleAddBadge(workId: string, badgeTypeId: string) {
@@ -246,6 +255,7 @@ export default function BadgesPage() {
 
   function handleAssignmentFilter(assignmentId: string) {
     setSelectedAssignment(assignmentId);
+    setWorks([]);
     setPage(1);
   }
 
@@ -299,7 +309,7 @@ export default function BadgesPage() {
           <span className="text-sm text-gray-600">並び替え:</span>
           <select
             value={sortBy}
-            onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
+            onChange={(e) => { setSortBy(e.target.value); setWorks([]); setPage(1); }}
             className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
           >
             <option value="random">ランダム</option>
@@ -386,25 +396,42 @@ export default function BadgesPage() {
               ))}
             </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="mt-6 flex items-center justify-center gap-2">
+            {/* Load More */}
+            {page < totalPages && (
+              <div className="mt-8 flex justify-center">
                 <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1}
-                  className="px-3 py-1.5 text-sm rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  type="button"
+                  onClick={handleLoadMore}
+                  disabled={loading}
+                  className="rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  前へ
-                </button>
-                <span className="text-sm text-gray-600">
-                  {page} / {totalPages}
-                </span>
-                <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page >= totalPages}
-                  className="px-3 py-1.5 text-sm rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  次へ
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <svg
+                        className="h-4 w-4 animate-spin"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        aria-hidden="true"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                        />
+                      </svg>
+                      読み込み中...
+                    </span>
+                  ) : (
+                    "もっと見る"
+                  )}
                 </button>
               </div>
             )}

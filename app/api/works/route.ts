@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { WorkItem, WorkListResponse } from "@/lib/types";
 
+// キャッシュを無効化し、常に最新データを返す
+export const dynamic = "force-dynamic";
+
 /**
  * GET /api/works - 作品一覧取得（認証不要）
  *
