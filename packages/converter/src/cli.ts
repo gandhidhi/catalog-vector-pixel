@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * convert-works CLI
- * .ai/.psd ファイルを PNG に変換するコマンドラインツール
+ * .ai/.psd/.pdf ファイルを PNG に変換するコマンドラインツール
  *
  * Usage:
  *   npx convert-works <inputDir> [options]
@@ -43,7 +43,7 @@ const program = new Command();
 
 program
   .name("convert-works")
-  .description(".ai/.psd ファイルを PNG に変換するツール")
+  .description(".ai/.psd/.pdf ファイルを PNG に変換するツール")
   .version("0.1.0")
   .argument("<inputDir>", "入力ディレクトリ")
   .option("-a, --assignment <number>", "課題番号 (表示用)")
@@ -63,7 +63,7 @@ async function run(inputDir: string, options: CliOptions): Promise<void> {
   const maxWidth = parseInt(options.maxWidth, 10);
 
   console.log("═══════════════════════════════════════════════════════");
-  console.log("  convert-works: .ai/.psd → PNG 変換ツール");
+  console.log("  convert-works: .ai/.psd/.pdf → PNG 変換ツール");
   console.log("═══════════════════════════════════════════════════════");
   if (options.assignment) {
     console.log(`  課題番号: ${options.assignment}`);
@@ -139,7 +139,7 @@ async function run(inputDir: string, options: CliOptions): Promise<void> {
       const ext = extname(filename).toLowerCase();
       let pngBuffer: Buffer;
 
-      if (ext === ".ai") {
+      if (ext === ".ai" || ext === ".pdf") {
         pngBuffer = await convertAiToPng(inputPath);
       } else if (ext === ".psd") {
         pngBuffer = await convertPsdToPng(inputPath);

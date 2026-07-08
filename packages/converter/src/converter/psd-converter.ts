@@ -1,13 +1,25 @@
 import { readFile } from "node:fs/promises";
 import sharp from "sharp";
-import { readPsd } from "ag-psd";
+import { readPsd, initializeCanvas } from "ag-psd";
+import { createCanvas, Image } from "canvas";
+
+// ag-psd にNode.js用Canvas実装を渡す
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+initializeCanvas(
+  (width: number, height: number) => createCanvas(width, height) as any,
+  (data: Uint8Array) => {
+    const img = new Image();
+    img.src = Buffer.from(data);
+    return img as any;
+  },
+);
 
 /**
  * PSDファイルをPNG Bufferに変換する
  *
  * 変換戦略:
  * 1. sharpで直接PSDを読み込みPNG変換（libvipsがPSDをサポートしている場合）
- * 2. 失敗時はag-psdでPSDを解析し、imageDataからsharpでPNG変換
+ * 2. 失敗時はag-psdでPSDを解析し、compositeイメージデータからsharpでPNG変換
  */
 export async function convertPsdToPng(inputPath: string): Promise<Buffer> {
   // まずsharpで直接変換を試みる（シンプルで高速）

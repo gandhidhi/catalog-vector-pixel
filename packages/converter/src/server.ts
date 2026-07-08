@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * start-converter Web UI サーバー
- * ブラウザGUIで .ai/.psd → PNG 変換を操作する
+ * ブラウザGUIで .ai/.psd/.pdf → PNG 変換を操作する
  *
  * Usage:
  *   npx start-converter
@@ -206,7 +206,7 @@ async function handleConvert(req: IncomingMessage, res: ServerResponse): Promise
       const ext = extname(filename).toLowerCase();
       let pngBuffer: Buffer;
 
-      if (ext === ".ai") {
+      if (ext === ".ai" || ext === ".pdf") {
         pngBuffer = await convertAiToPng(inputPath, resolution);
       } else if (ext === ".psd") {
         pngBuffer = await convertPsdToPng(inputPath);

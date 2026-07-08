@@ -1,9 +1,9 @@
 /**
  * 変換対象ファイルのフィルタリング
- * .ai / .psd のみが変換対象。それ以外はスキップ。
+ * .ai / .psd / .pdf が変換対象。それ以外はスキップ。
  */
 
-const CONVERTIBLE_EXTENSIONS = /\.(ai|psd)$/i;
+const CONVERTIBLE_EXTENSIONS = /\.(ai|psd|pdf)$/i;
 
 export interface FilterResult {
   convertible: string[];
@@ -12,7 +12,7 @@ export interface FilterResult {
 
 /**
  * ファイル名リストから変換対象ファイルとスキップ対象ファイルを分類する
- * - .ai / .psd 拡張子（大文字小文字不問）のみが変換対象
+ * - .ai / .psd / .pdf 拡張子（大文字小文字不問）のみが変換対象
  * - それ以外のファイルはスキップ
  */
 export function filterConvertibleFiles(filenames: string[]): FilterResult {

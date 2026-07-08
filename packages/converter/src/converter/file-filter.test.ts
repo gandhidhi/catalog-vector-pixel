@@ -14,22 +14,28 @@ describe("filterConvertibleFiles", () => {
     expect(result.skipped).toEqual([]);
   });
 
+  it("filters .pdf files as convertible", () => {
+    const result = filterConvertibleFiles(["doc.pdf"]);
+    expect(result.convertible).toEqual(["doc.pdf"]);
+    expect(result.skipped).toEqual([]);
+  });
+
   it("is case-insensitive for extensions", () => {
-    const result = filterConvertibleFiles(["file.AI", "file.PSD", "file.Ai", "file.Psd"]);
-    expect(result.convertible).toEqual(["file.AI", "file.PSD", "file.Ai", "file.Psd"]);
+    const result = filterConvertibleFiles(["file.AI", "file.PSD", "file.Ai", "file.Psd", "file.PDF"]);
+    expect(result.convertible).toEqual(["file.AI", "file.PSD", "file.Ai", "file.Psd", "file.PDF"]);
     expect(result.skipped).toEqual([]);
   });
 
   it("skips non-convertible files", () => {
-    const result = filterConvertibleFiles(["readme.txt", "photo.jpg", "image.png", "doc.pdf"]);
+    const result = filterConvertibleFiles(["readme.txt", "photo.jpg", "image.png"]);
     expect(result.convertible).toEqual([]);
-    expect(result.skipped).toEqual(["readme.txt", "photo.jpg", "image.png", "doc.pdf"]);
+    expect(result.skipped).toEqual(["readme.txt", "photo.jpg", "image.png"]);
   });
 
   it("correctly separates mixed file types", () => {
-    const files = ["12345001_田中.ai", "readme.txt", "12345002_鈴木.psd", "notes.md"];
+    const files = ["12345001_田中.ai", "readme.txt", "12345002_鈴木.psd", "notes.md", "report.pdf"];
     const result = filterConvertibleFiles(files);
-    expect(result.convertible).toEqual(["12345001_田中.ai", "12345002_鈴木.psd"]);
+    expect(result.convertible).toEqual(["12345001_田中.ai", "12345002_鈴木.psd", "report.pdf"]);
     expect(result.skipped).toEqual(["readme.txt", "notes.md"]);
   });
 
