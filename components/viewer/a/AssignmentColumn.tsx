@@ -177,7 +177,7 @@ export default function AssignmentColumn({
           loadMoreRef.current();
         }
       },
-      { root: rootEl, rootMargin: "300px" },
+      { root: null, rootMargin: "300px" },
     );
     observer.observe(target);
     return () => observer.disconnect();
@@ -289,7 +289,7 @@ export default function AssignmentColumn({
         <div
           ref={listRef}
           onScroll={onScrollY ? (e) => onScrollY((e.target as HTMLElement).scrollTop) : undefined}
-          className={`absolute inset-0 overflow-y-auto pb-10 transition-opacity duration-300 ${
+          className={`absolute inset-0 overflow-y-auto scrollbar-hidden pb-10 transition-opacity duration-300 ${
           expanded ? (gridMode === 3 ? "px-0 md:px-8" : "px-5 md:px-8") : "px-5"
         } ${fadingOut ? "opacity-0" : "opacity-100"}`}
       >

@@ -34,6 +34,9 @@ body {
   --yarl__color_button_active: rgb(255, 255, 255);
   --yarl__toolbar_filter: none;
 }
+.yarl__button {
+  filter: none !important;
+}
 .yarl__slide_description {
   font-size: 12px !important;
   line-height: 1.6;

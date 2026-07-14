@@ -43,17 +43,38 @@ export default function ViewerA() {
   const [mobileTabId, setMobileTabId] = useState<string | null>(null);
   // モバイル: スクロール方向によるヘッダー+タブの表示/非表示
   const [mobileHeaderHidden, setMobileHeaderHidden] = useState(false);
-  const mobileScrollRef = useRef({ lastY: 0, ticking: false });
+  const mobileScrollRef = useRef({ lastY: 0, accDelta: 0 });
 
   function handleMobileScroll(scrollTop: number) {
     const prev = mobileScrollRef.current.lastY;
     const delta = scrollTop - prev;
     mobileScrollRef.current.lastY = scrollTop;
-    // 下にスクロール（delta > 0）→ 隠す, 上にスクロール（delta < 0）→ 表示
-    if (delta > 5) {
+
+    // 先頭付近（80px以下）では常にヘッダーを表示
+    if (scrollTop < 80) {
+      if (mobileHeaderHidden) {
+        setMobileHeaderHidden(false);
+        mobileScrollRef.current.accDelta = 0;
+      }
+      return;
+    }
+
+    // 同じ方向にaccDeltaを蓄積し、しきい値を超えたら切り替え
+    if ((delta > 0 && mobileScrollRef.current.accDelta >= 0) ||
+        (delta < 0 && mobileScrollRef.current.accDelta <= 0)) {
+      mobileScrollRef.current.accDelta += delta;
+    } else {
+      // 方向が変わったらリセット
+      mobileScrollRef.current.accDelta = delta;
+    }
+
+    const acc = mobileScrollRef.current.accDelta;
+    if (acc > 30 && !mobileHeaderHidden) {
       setMobileHeaderHidden(true);
-    } else if (delta < -5) {
+      mobileScrollRef.current.accDelta = 0;
+    } else if (acc < -30 && mobileHeaderHidden) {
       setMobileHeaderHidden(false);
+      mobileScrollRef.current.accDelta = 0;
     }
   }
 
