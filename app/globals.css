@@ -11,3 +11,48 @@ body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
 }
+
+/* ライトボックス: 上下の黒バー（タイトル/キャプション）を固定高にし、
+   画像エリアの上下余白をバーの高さとぴったり揃える */
+.yarl__slide {
+  padding-top: 72px !important;
+  padding-bottom: 72px !important;
+}
+.yarl__slide_title_container,
+.yarl__slide_description_container {
+  height: 72px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* ライトボックス: 左上タイトルは細めに、下部キャプションは小さめに */
+.yarl__portal {
+  --yarl__slide_title_font_weight: 500;
+}
+.yarl__slide_description {
+  font-size: 12px !important;
+  line-height: 1.6;
+}
+
+/* 課題の展開切り替え時に作品グリッドをアルファでフェードインさせる */
+@keyframes viewer-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.fade-in-content {
+  animation: viewer-fade-in 300ms ease-in-out;
+}
+
+/* スクロール可能なままスクロールバーだけを非表示にする */
+.scrollbar-hidden {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* old Edge/IE */
+}
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none; /* Chrome / Safari */
+}

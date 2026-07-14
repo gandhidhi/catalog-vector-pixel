@@ -109,7 +109,7 @@ Adobe Portfolio Viewerの実装計画。Next.js 14 (App Router) + Supabase (Post
     - `app/(admin)/assignments/page.tsx`: 課題登録フォーム・一覧表示UI
     - _Requirements: 8.2, 8.6_
 
-- [~] 5. チェックポイント - マスターデータ管理の検証
+- [ ] 5. チェックポイント - マスターデータ管理の検証
   - Ensure all tests pass, ask the user if questions arise.
 
 - [x] 6. ローカル変換ツール実装
@@ -164,7 +164,7 @@ Adobe Portfolio Viewerの実装計画。Next.js 14 (App Router) + Supabase (Post
     - 進捗表示とエラー表示
     - _Requirements: 4.2, 4.7, 4.8, 4.9_
 
-- [~] 7. チェックポイント - 変換ツールの検証
+- [ ] 7. チェックポイント - 変換ツールの検証
   - Ensure all tests pass, ask the user if questions arise.
 
 - [x] 8. ファイルアップロード機能
@@ -205,7 +205,7 @@ Adobe Portfolio Viewerの実装計画。Next.js 14 (App Router) + Supabase (Post
     - `/api/uploads/bulk/route.ts` は削除またはリダイレクト用に残す
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9_
 
-- [~] 9. チェックポイント - アップロード機能の検証
+- [ ] 9. チェックポイント - アップロード機能の検証
   - Ensure all tests pass, ask the user if questions arise.
 
 - [x] 10. 閲覧ページ実装
@@ -281,7 +281,7 @@ Adobe Portfolio Viewerの実装計画。Next.js 14 (App Router) + Supabase (Post
     - 各管理機能（アップロード、バルクアップロード、学生管理、課題管理、バッジ管理）へのナビゲーション
     - _Requirements: 1.2_
 
-- [~] 13. 最終チェックポイント - 全体統合テスト
+- [ ] 13. 最終チェックポイント - 全体統合テスト
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

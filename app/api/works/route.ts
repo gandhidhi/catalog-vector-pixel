@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
  * - assignmentIds: カンマ区切りUUID（課題フィルター）
  * - badgeIds: カンマ区切りUUID（バッジ種別フィルター）
  * - hasBadge: "true" でバッジ付き作品のみ
+ * - minBadges: 指定数以上のバッジが付与された作品のみ（例: 3）
  * - page: ページ番号（1始まり、デフォルト1）
  * - pageSize: ページサイズ（デフォルト20）
  * - sortBy: ソート順（"assignment_desc"=課題番号降順（デフォルト）, "student_asc"=学籍番号昇順, "student_desc"=学籍番号降順）
@@ -26,6 +27,7 @@ export async function GET(request: NextRequest) {
   const assignmentIdsParam = searchParams.get("assignmentIds");
   const badgeIdsParam = searchParams.get("badgeIds");
   const hasBadgeParam = searchParams.get("hasBadge");
+  const minBadgesParam = searchParams.get("minBadges");
   const pageParam = searchParams.get("page");
   const pageSizeParam = searchParams.get("pageSize");
   const sortByParam = searchParams.get("sortBy") ?? "assignment_desc";
@@ -40,6 +42,9 @@ export async function GET(request: NextRequest) {
     ? badgeIdsParam.split(",").filter(Boolean)
     : undefined;
   const hasBadge = hasBadgeParam === "true";
+  const minBadges = minBadgesParam
+    ? Math.max(0, parseInt(minBadgesParam, 10) || 0)
+    : 0;
 
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
   const pageSize = Math.max(1, Math.min(100, parseInt(pageSizeParam ?? "20", 10) || 20));
@@ -47,14 +52,12 @@ export async function GET(request: NextRequest) {
   // バッジフィルターが指定されている場合、対象work_idsを先に取得する
   let badgeFilteredWorkIds: string[] | undefined;
 
-  if (hasBadge || (badgeIds && badgeIds.length > 0)) {
-    let badgeQuery = supabase.from("work_badges").select("work_id");
-
-    if (badgeIds && badgeIds.length > 0) {
-      badgeQuery = badgeQuery.in("badge_type_id", badgeIds);
-    }
-
-    const { data: badgeData, error: badgeError } = await badgeQuery;
+  if (hasBadge || (badgeIds && badgeIds.length > 0) || minBadges > 0) {
+    // バッジ数の条件（minBadges）は作品ごとの総数が必要なため、
+    // 種別で絞らず全行を取得してからアプリ側で集計する
+    const { data: badgeData, error: badgeError } = await supabase
+      .from("work_badges")
+      .select("work_id, badge_type_id");
 
     if (badgeError) {
       return NextResponse.json(
@@ -63,9 +66,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 重複排除してwork_idのリストを取得
-    const workIdSet = new Set((badgeData ?? []).map((row) => row.work_id));
-    badgeFilteredWorkIds = Array.from(workIdSet);
+    // 作品ごとのバッジ総数と、指定種別に該当する作品を集計
+    const badgeCounts = new Map<string, number>();
+    const typeMatchedWorkIds = new Set<string>();
+    for (const row of badgeData ?? []) {
+      badgeCounts.set(row.work_id, (badgeCounts.get(row.work_id) ?? 0) + 1);
+      if (badgeIds && badgeIds.includes(row.badge_type_id)) {
+        typeMatchedWorkIds.add(row.work_id);
+      }
+    }
+
+    let workIdList = Array.from(badgeCounts.keys());
+    if (badgeIds && badgeIds.length > 0) {
+      workIdList = workIdList.filter((id) => typeMatchedWorkIds.has(id));
+    }
+    if (minBadges > 0) {
+      workIdList = workIdList.filter(
+        (id) => (badgeCounts.get(id) ?? 0) >= minBadges,
+      );
+    }
+    badgeFilteredWorkIds = workIdList;
 
     // バッジフィルター適用で該当作品が0件の場合、空結果を返す
     if (badgeFilteredWorkIds.length === 0) {
