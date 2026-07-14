@@ -30,7 +30,7 @@ export default function WorkCardA({ work, onClick, hideInfo }: WorkCardAProps) {
         className="group block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-a"
       >
         {/* 額縁: マットの内側に画像を余白付きで収める */}
-        <div className={`-ml-px -mt-px aspect-square w-[calc(100%+1px)] border border-slate-200 bg-slate-50 ${hideInfo ? "p-1" : "p-2"}`}>
+        <div className={`aspect-square ${hideInfo ? "w-full border border-slate-50" : "-ml-px -mt-px w-[calc(100%+1px)] border border-slate-200 bg-slate-50 p-2"}`}>
           <div className="relative h-full w-full overflow-hidden bg-slate-100">
             {imgError ? (
               <div className="flex h-full w-full items-center justify-center text-slate-300">

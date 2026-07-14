@@ -87,8 +87,9 @@ export default function ViewerA() {
 
   // 展開表示中の課題ID（nullなら通常の列表示）
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  // 展開グリッドの列数モード（全課題で共有）
-  const [gridMode, setGridMode] = useState<GridMode>(1);
+  // 展開グリッドの列数モード
+  const [desktopGridMode, setDesktopGridMode] = useState<GridMode>("responsive");
+  const [mobileGridMode, setMobileGridMode] = useState<GridMode>(1);
   const expandedAssignment = expandedId
     ? (assignments.find((a) => a.id === expandedId) ?? null)
     : null;
@@ -256,7 +257,7 @@ export default function ViewerA() {
     <div className="flex h-full flex-col overflow-hidden">
       {/* モバイル: ヘッダー（スクロールで隠れる） */}
       <div
-        className={`md:hidden shrink-0 grid transition-[grid-template-rows,opacity] duration-200 ease-out ${
+        className={`md:hidden shrink-0 grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
           mobileHeaderHidden ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"
         }`}
       >
@@ -332,8 +333,8 @@ export default function ViewerA() {
                     dimOthersExcept !== null &&
                     dimOthersExcept !== assignment.id
                   }
-                  gridMode={gridMode}
-                  onGridModeChange={setGridMode}
+                  gridMode={desktopGridMode}
+                  onGridModeChange={setDesktopGridMode}
                   onExpand={() => handleExpand(assignment.id)}
                   onCollapse={handleCollapse}
                 />
@@ -355,8 +356,8 @@ export default function ViewerA() {
                       sortBy={sortBy}
                       onWorkClick={setSelectedWork}
                       expanded={true}
-                      gridMode={gridMode}
-                      onGridModeChange={setGridMode}
+                      gridMode={mobileGridMode}
+                      onGridModeChange={setMobileGridMode}
                       onExpand={() => {}}
                       onCollapse={() => {}}
                       onScrollY={handleMobileScroll}

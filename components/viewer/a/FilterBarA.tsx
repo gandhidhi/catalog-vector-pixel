@@ -368,7 +368,7 @@ function MobileFilterMenu({
   return (
     <div
       ref={ref}
-      className={`relative md:hidden grid transition-[grid-template-rows,opacity] duration-200 ease-out ${
+      className={`relative md:hidden grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
         mobileHidden ? "grid-rows-[0fr] opacity-0 pointer-events-none" : "grid-rows-[1fr] opacity-100"
       }`}
     >
