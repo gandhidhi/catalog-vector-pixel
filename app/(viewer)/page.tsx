@@ -36,7 +36,10 @@ function ViewerContent() {
   // Aパターン（Bは準備中のため、それ以外はすべてAを表示）
   return (
     <main className="flex h-dvh flex-col bg-slate-50 font-plex-sans">
-      <ViewerHeader />
+      {/* デスクトップ: ヘッダーは常時表示 */}
+      <div className="hidden md:block">
+        <ViewerHeader />
+      </div>
       <div className="min-h-0 flex-1">
         <ViewerA />
       </div>

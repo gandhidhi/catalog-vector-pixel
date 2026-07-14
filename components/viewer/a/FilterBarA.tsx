@@ -1,6 +1,7 @@
 "use client";
 
 import { RefObject, useEffect, useRef, useState } from "react";
+import { ChevronDownIcon, Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { FilterOption, SortOptionA } from "./types";
 
 const SORT_OPTIONS: { value: SortOptionA; label: string }[] = [
@@ -26,6 +27,14 @@ interface FilterBarAProps {
   onThreeTagsChange: (value: boolean) => void;
   sortBy: SortOptionA;
   onSortChange: (sort: SortOptionA) => void;
+  /** 課題一覧（モバイルタブ用） */
+  assignments?: { id: string; number: number; name: string }[];
+  /** モバイルで選択中の課題ID */
+  mobileTabId?: string | null;
+  /** モバイルタブ変更時 */
+  onMobileTabChange?: (id: string) => void;
+  /** モバイル: スクロールで隠す */
+  mobileHidden?: boolean;
 }
 
 /** 要素の外側をクリックしたら onClose を呼ぶ */
@@ -157,20 +166,10 @@ export default function FilterBarA(props: FilterBarAProps) {
 
 function DropdownChevron({ open }: { open: boolean }) {
   return (
-    <svg
+    <ChevronDownIcon
       className={`h-3.5 w-3.5 transition ${open ? "rotate-180" : ""}`}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
       aria-hidden="true"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M19 9l-7 7-7-7"
-      />
-    </svg>
+    />
   );
 }
 
@@ -352,6 +351,10 @@ function MobileFilterMenu({
   onThreeTagsChange,
   sortBy,
   onSortChange,
+  assignments,
+  mobileTabId,
+  onMobileTabChange,
+  mobileHidden,
 }: FilterBarAProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -363,42 +366,55 @@ function MobileFilterMenu({
   if (tagCount > 0) activeSummary.push(`タグ: ${tagCount}件`);
 
   return (
-    <div ref={ref} className="flex items-center justify-between px-4 py-2 md:hidden">
-      <p className="truncate text-[11px] text-slate-400">
-        {activeSummary.join(" / ")}
-      </p>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        aria-expanded={open}
-        aria-label="検索・フィルターメニュー"
-        className="flex h-8 w-8 items-center justify-center border border-slate-300 text-slate-500 transition hover:border-accent-a hover:text-accent-a"
-      >
-        <svg
-          className="h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"
-          />
-        </svg>
-      </button>
+    <div
+      ref={ref}
+      className={`relative md:hidden grid transition-[grid-template-rows,opacity] duration-200 ease-out ${
+        mobileHidden ? "grid-rows-[0fr] opacity-0 pointer-events-none" : "grid-rows-[1fr] opacity-100"
+      }`}
+    >
+      <div className="overflow-hidden">
+      <div className="flex items-center">
+        {/* 課題タブ（横スクロール） */}
+        <div className="scrollbar-hidden flex min-w-0 flex-1 items-center gap-0 overflow-x-auto px-4 py-2">
+          {(assignments ?? []).map((a) => (
+            <button
+              key={a.id}
+              type="button"
+              onClick={() => onMobileTabChange?.(a.id)}
+              className={`shrink-0 px-9 py-1 font-plex-mono text-xs transition ${
+                mobileTabId === a.id
+                  ? "border-b-2 border-accent-a font-medium text-accent-a"
+                  : "text-slate-400 hover:text-slate-600"
+              }`}
+            >
+              {String(a.number).padStart(2, "0")}
+            </button>
+          ))}
+        </div>
 
+        {/* ハンバーガーメニュー（右固定） */}
+        <div className="shrink-0 bg-white pl-2 pr-4 py-2">
+          <button
+            type="button"
+            onClick={() => setOpen(!open)}
+            aria-expanded={open}
+            aria-label="検索・フィルターメニュー"
+            className="flex h-8 w-8 items-center justify-center border border-slate-300 text-slate-500 transition hover:border-accent-a hover:text-accent-a"
+          >
+            <Bars3Icon className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+      </div>
       {/* Non-modal dialog */}
       {open && (
         <div
           role="dialog"
           aria-label="検索とフィルター"
-          className="absolute right-2 top-full z-30 mt-2 w-[calc(100vw-1rem)] max-w-sm border border-slate-200 bg-white p-4 shadow-xl"
+          className="absolute right-2 top-full z-30 mt-2 w-[calc(100vw-1rem)] max-w-sm border border-slate-200 bg-white p-5 shadow-xl"
         >
           <div className="flex items-center justify-between">
-            <p className="text-xs tracking-widest text-slate-400">
+            <p className="text-sm tracking-widest text-slate-400">
               検索・フィルター
             </p>
             <button
@@ -407,25 +423,12 @@ function MobileFilterMenu({
               aria-label="閉じる"
               className="text-slate-400 transition hover:text-slate-500"
             >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <XMarkIcon className="h-5 w-5" />
             </button>
           </div>
 
           {/* Student search */}
-          <div className="mt-3">
+          <div className="mt-4">
             <StudentSearchBox
               studentOptions={studentOptions}
               selected={pendingStudents}
@@ -433,11 +436,11 @@ function MobileFilterMenu({
               onSubmit={onSearch}
               widthClass="w-full"
             />
-            <div className="mt-2 flex items-center gap-3">
+            <div className="mt-3 flex items-center gap-3">
               <button
                 type="button"
                 onClick={onSearch}
-                className="flex-1 border border-accent-a px-4 py-1.5 text-xs font-medium text-accent-a transition hover:bg-accent-a hover:text-white"
+                className="flex-1 border border-accent-a px-4 py-2 text-sm font-medium text-accent-a transition hover:bg-accent-a hover:text-white"
               >
                 検索開始
               </button>
@@ -445,7 +448,7 @@ function MobileFilterMenu({
                 <button
                   type="button"
                   onClick={onClearSearch}
-                  className="shrink-0 text-xs text-slate-400 underline underline-offset-2 hover:text-slate-500"
+                  className="shrink-0 text-sm text-slate-400 underline underline-offset-2 hover:text-slate-500"
                 >
                   クリア
                 </button>
@@ -454,14 +457,14 @@ function MobileFilterMenu({
           </div>
 
           {/* Sort */}
-          <div className="mt-4">
-            <p className="mb-1.5 text-xs tracking-widest text-slate-400">
+          <div className="mt-5">
+            <p className="mb-2 text-sm tracking-widest text-slate-400">
               ソート
             </p>
             <select
               value={sortBy}
               onChange={(e) => onSortChange(e.target.value as SortOptionA)}
-              className="w-full border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-500 focus:border-accent-a focus:outline-none"
+              className="w-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-500 focus:border-accent-a focus:outline-none"
             >
               {SORT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -473,16 +476,16 @@ function MobileFilterMenu({
 
           {/* Tags */}
           {badgeTypes.length > 0 && (
-            <div className="mt-4">
-              <p className="mb-1.5 text-xs tracking-widest text-slate-400">
+            <div className="mt-5">
+              <p className="mb-2 text-sm tracking-widest text-slate-400">
                 タグ
               </p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2.5">
                 {/* ３つタグは常に先頭 */}
                 <button
                   type="button"
                   onClick={() => onThreeTagsChange(!threeTagsOnly)}
-                  className={`border px-2.5 py-1 text-xs transition ${
+                  className={`border px-3 py-1.5 text-sm transition ${
                     threeTagsOnly
                       ? "border-accent-a bg-accent-a-soft font-medium text-accent-a"
                       : "border-slate-300 text-slate-500 hover:border-slate-400"
@@ -501,7 +504,7 @@ function MobileFilterMenu({
                           : [...selectedBadges, b.id],
                       )
                     }
-                    className={`border px-2.5 py-1 text-xs transition ${
+                    className={`border px-3 py-1.5 text-sm transition ${
                       selectedBadges.includes(b.id)
                         ? "border-accent-a bg-accent-a-soft font-medium text-accent-a"
                         : "border-slate-300 text-slate-500 hover:border-slate-400"

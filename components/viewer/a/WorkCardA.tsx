@@ -2,11 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { PhotoIcon, ChevronRightIcon, ChevronLeftIcon } from "@heroicons/react/24/outline";
 import { WorkItem } from "@/lib/types";
 
 interface WorkCardAProps {
   work: WorkItem;
   onClick: () => void;
+  /** trueの場合、学生名とタグを非表示にする */
+  hideInfo?: boolean;
 }
 
 /**
@@ -15,7 +18,7 @@ interface WorkCardAProps {
  * タグ行の中にスクロールボタンを置くため、カード全体ではなく
  * 画像+学生名の部分だけをクリック領域（ボタン）にしている。
  */
-export default function WorkCardA({ work, onClick }: WorkCardAProps) {
+export default function WorkCardA({ work, onClick, hideInfo }: WorkCardAProps) {
   const [imgError, setImgError] = useState(false);
 
   return (
@@ -27,24 +30,11 @@ export default function WorkCardA({ work, onClick }: WorkCardAProps) {
         className="group block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-a"
       >
         {/* 額縁: マットの内側に画像を余白付きで収める */}
-        <div className="-ml-px aspect-square w-[calc(100%+1px)] border border-slate-200 bg-slate-50 p-2">
+        <div className={`-ml-px -mt-px aspect-square w-[calc(100%+1px)] border border-slate-200 bg-slate-50 ${hideInfo ? "p-1" : "p-2"}`}>
           <div className="relative h-full w-full overflow-hidden bg-slate-100">
             {imgError ? (
               <div className="flex h-full w-full items-center justify-center text-slate-300">
-                <svg
-                  className="h-10 w-10"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"
-                  />
-                </svg>
+                <PhotoIcon className="h-10 w-10" />
               </div>
             ) : (
               <Image
@@ -59,11 +49,11 @@ export default function WorkCardA({ work, onClick }: WorkCardAProps) {
           </div>
         </div>
 
-        <p className="mt-2.5 truncate px-2 text-xs font-normal text-slate-500">{work.studentName}</p>
+        <p className={`mt-2.5 truncate px-2 text-xs font-normal text-slate-500 ${hideInfo ? "hidden" : ""}`}>{work.studentName}</p>
       </button>
 
       {/* タグの有無でカードの縦幅が変わらないよう、行の高さは常に確保する */}
-      <div className="mt-1.5 h-5 px-2">
+      <div className={`mt-1.5 h-5 px-2 ${hideInfo ? "hidden" : ""}`}>
         {work.badges.length > 0 && <BadgeRow badges={work.badges} />}
       </div>
     </div>
@@ -138,20 +128,11 @@ function BadgeRowArrow({ direction, onClick }: { direction: 1 | -1; onClick: () 
       aria-label={direction === 1 ? "隠れているタグを表示" : "前のタグに戻る"}
       className="flex h-[18px] w-[18px] items-center justify-center border border-slate-200 bg-white text-slate-400 shadow-sm transition hover:border-accent-a hover:text-accent-a"
     >
-      <svg
-        className="h-3 w-3"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d={direction === 1 ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7"}
-        />
-      </svg>
+      {direction === 1 ? (
+        <ChevronRightIcon className="h-3 w-3" />
+      ) : (
+        <ChevronLeftIcon className="h-3 w-3" />
+      )}
     </button>
   );
 }

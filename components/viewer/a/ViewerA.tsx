@@ -1,12 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ChevronRightIcon, ChevronLeftIcon } from "@heroicons/react/24/outline";
 import { Assignment, WorkItem } from "@/lib/types";
 import Lightbox from "yet-another-react-lightbox";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import Captions from "yet-another-react-lightbox/plugins/captions";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/captions.css";
+import ViewerHeader from "@/components/viewer/ViewerHeader";
 import FilterBarA from "./FilterBarA";
 import AssignmentColumn, {
   EXPAND_ANIMATION_MS,
@@ -37,10 +39,35 @@ export default function ViewerA() {
 
   const [selectedWork, setSelectedWork] = useState<WorkItem | null>(null);
 
+  // モバイル: 選択中の課題タブ（最初は1番目）
+  const [mobileTabId, setMobileTabId] = useState<string | null>(null);
+  // モバイル: スクロール方向によるヘッダー+タブの表示/非表示
+  const [mobileHeaderHidden, setMobileHeaderHidden] = useState(false);
+  const mobileScrollRef = useRef({ lastY: 0, ticking: false });
+
+  function handleMobileScroll(scrollTop: number) {
+    const prev = mobileScrollRef.current.lastY;
+    const delta = scrollTop - prev;
+    mobileScrollRef.current.lastY = scrollTop;
+    // 下にスクロール（delta > 0）→ 隠す, 上にスクロール（delta < 0）→ 表示
+    if (delta > 5) {
+      setMobileHeaderHidden(true);
+    } else if (delta < -5) {
+      setMobileHeaderHidden(false);
+    }
+  }
+
+  // 課題読み込み後にデフォルトのタブを設定
+  useEffect(() => {
+    if (assignments.length > 0 && mobileTabId === null) {
+      setMobileTabId(assignments[0].id);
+    }
+  }, [assignments, mobileTabId]);
+
   // 展開表示中の課題ID（nullなら通常の列表示）
   const [expandedId, setExpandedId] = useState<string | null>(null);
   // 展開グリッドの列数モード（全課題で共有）
-  const [gridMode, setGridMode] = useState<GridMode>("responsive");
+  const [gridMode, setGridMode] = useState<GridMode>(1);
   const expandedAssignment = expandedId
     ? (assignments.find((a) => a.id === expandedId) ?? null)
     : null;
@@ -205,7 +232,18 @@ export default function ViewerA() {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col overflow-hidden">
+      {/* モバイル: ヘッダー（スクロールで隠れる） */}
+      <div
+        className={`md:hidden shrink-0 grid transition-[grid-template-rows,opacity] duration-200 ease-out ${
+          mobileHeaderHidden ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <ViewerHeader />
+        </div>
+      </div>
+
       <FilterBarA
         studentOptions={studentOptions}
         badgeTypes={badgeTypes}
@@ -220,6 +258,10 @@ export default function ViewerA() {
         onThreeTagsChange={setThreeTagsOnly}
         sortBy={sortBy}
         onSortChange={setSortBy}
+        assignments={assignments}
+        mobileTabId={mobileTabId}
+        onMobileTabChange={setMobileTabId}
+        mobileHidden={mobileHeaderHidden}
       />
 
       {/* Assignment columns */}
@@ -242,10 +284,11 @@ export default function ViewerA() {
         ) : (
           /* 全列を常に描画し、展開時は他列を幅0に畳んでアニメーションさせる */
           <div className="flex h-full bg-slate-50">
+            {/* Desktop: 全カラム横並び */}
             <div
               ref={scrollRef}
               onScroll={updateArrows}
-              className={`flex h-full min-w-0 flex-1 snap-x divide-x divide-slate-200 overflow-x-auto ${
+              className={`hidden h-full min-w-0 flex-1 snap-x divide-x divide-slate-200 overflow-x-auto md:flex ${
                 expandedAssignment ? "border-r border-slate-200" : ""
               }`}
             >
@@ -276,9 +319,34 @@ export default function ViewerA() {
               ))}
             </div>
 
+            {/* Mobile: 選択タブの課題のみ表示 */}
+            {mobileTabId && (
+              <div className="flex h-full min-w-0 flex-1 bg-slate-50 md:hidden">
+                {assignments
+                  .filter((a) => a.id === mobileTabId)
+                  .map((assignment) => (
+                    <AssignmentColumn
+                      key={assignment.id}
+                      assignment={assignment}
+                      studentIds={appliedStudentIds}
+                      badgeIds={selectedBadges}
+                      minBadges={threeTagsOnly ? 3 : 0}
+                      sortBy={sortBy}
+                      onWorkClick={setSelectedWork}
+                      expanded={true}
+                      gridMode={gridMode}
+                      onGridModeChange={setGridMode}
+                      onExpand={() => {}}
+                      onCollapse={() => {}}
+                      onScrollY={handleMobileScroll}
+                    />
+                  ))}
+              </div>
+            )}
+
             {/* 右端: 他の課題への切り替えレール（展開時のみ表示） */}
             <aside
-              className={`flex shrink-0 flex-col border-l border-slate-200 bg-slate-100 ease-in-out ${
+              className={`hidden shrink-0 flex-col border-l border-slate-200 bg-slate-100 ease-in-out md:flex ${
                 railVisible
                   ? "w-12 translate-x-0 opacity-100 transition-[opacity,transform] duration-200"
                   : expandedAssignment
@@ -377,20 +445,11 @@ function PagingArrow({
         direction === 1 ? "right-3" : "left-3"
       } ${visible ? "opacity-100" : "pointer-events-none opacity-0"}`}
     >
-      <svg
-        className="h-4 w-4 text-slate-600"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d={direction === 1 ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7"}
-        />
-      </svg>
+      {direction === 1 ? (
+        <ChevronRightIcon className="h-4 w-4 text-slate-600" />
+      ) : (
+        <ChevronLeftIcon className="h-4 w-4 text-slate-600" />
+      )}
     </button>
   );
 }

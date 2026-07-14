@@ -32,6 +32,7 @@ body {
   --yarl__color_text: rgb(51, 65, 85);
   --yarl__color_button: rgb(255, 255, 255);
   --yarl__color_button_active: rgb(255, 255, 255);
+  --yarl__toolbar_filter: none;
 }
 .yarl__slide_description {
   font-size: 12px !important;

@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowsPointingInIcon } from "@heroicons/react/24/outline";
+import { StopIcon, Squares2X2Icon } from "@heroicons/react/24/solid";
 import { Assignment, WorkItem, WorkListResponse } from "@/lib/types";
 import WorkCardA from "./WorkCardA";
 import { GridMode, SortOptionA } from "./types";
@@ -38,6 +40,8 @@ interface AssignmentColumnProps {
   onExpand?: () => void;
   /** 展開表示時: ヘッダー押下で列表示に戻る */
   onCollapse?: () => void;
+  /** スクロール位置変更コールバック（モバイル用） */
+  onScrollY?: (scrollTop: number) => void;
 }
 
 /**
@@ -61,6 +65,7 @@ export default function AssignmentColumn({
   onGridModeChange,
   onExpand,
   onCollapse,
+  onScrollY,
 }: AssignmentColumnProps) {
   const [works, setWorks] = useState<WorkItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -200,9 +205,9 @@ export default function AssignmentColumn({
     >
       {/* Header */}
       {expanded ? (
-        /* 展開時: ヘッダー全体が縮小ボタン（縮小時と同じタッチエリア）。
-           列数タブと縮小アイコンは上に重ねて配置し、タッチエリアから除外 */
-        <div className="relative shrink-0">
+        <>
+        {/* デスクトップ: 展開時ヘッダー（縮小ボタン＋グリッドタブ付き） */}
+        <div className="relative hidden shrink-0 md:block">
           <button
             type="button"
             onClick={onCollapse}
@@ -234,36 +239,24 @@ export default function AssignmentColumn({
               expandAnimDone ? "opacity-100" : "opacity-0"
             }`}
           >
-            {/* グリッド列数の切り替えタブ */}
+            {/* グリッド列数の切り替えタブ（デスクトップ） */}
             <GridModeTabs
               value={gridMode}
               onChange={(mode) => onGridModeChange?.(mode)}
             />
 
-            {/* 縮小ボタン */}
+            {/* 縮小ボタン（デスクトップのみ） */}
             <button
               type="button"
               onClick={onCollapse}
               aria-label="縮小して全課題を表示"
-              className="flex h-7 w-7 items-center justify-center border border-slate-300 bg-white text-slate-500 transition hover:border-accent-a hover:text-accent-a"
+              className="hidden h-7 w-7 items-center justify-center border border-slate-300 bg-white text-slate-500 transition hover:border-accent-a hover:text-accent-a md:flex"
             >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"
-                />
-              </svg>
+              <ArrowsPointingInIcon className="h-4 w-4" />
             </button>
           </div>
         </div>
+        </>
       ) : (
         /* 通常時: ヘッダー全体がボタン。押下でこの課題を展開表示 */
         <button
@@ -292,22 +285,57 @@ export default function AssignmentColumn({
       )}
 
       {/* Scrollable works list */}
-      <div
-        ref={listRef}
-        className={`scrollbar-hidden min-h-0 flex-1 overflow-y-auto pb-10 pt-1 transition-opacity duration-300 ${
-          expanded ? "px-5 md:px-8" : "px-5"
+      <div className="relative min-h-0 flex-1">
+        <div
+          ref={listRef}
+          onScroll={onScrollY ? (e) => onScrollY((e.target as HTMLElement).scrollTop) : undefined}
+          className={`absolute inset-0 overflow-y-auto pb-10 transition-opacity duration-300 ${
+          expanded ? (gridMode === 3 ? "px-0 md:px-8" : "px-5 md:px-8") : "px-5"
         } ${fadingOut ? "opacity-0" : "opacity-100"}`}
       >
+        {/* モバイル: 課題情報 + グリッド切替（スクロール内sticky） */}
+        {expanded && (
+          <div className={`sticky top-0 z-10 border-b border-slate-200 bg-slate-50 px-5 pb-3 pt-4 md:hidden ${gridMode === 3 ? "" : "-mx-5"}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex min-w-0 items-end gap-3">
+                <p className="shrink-0 font-plex-mono text-xl font-normal leading-none tracking-tight text-slate-500">
+                  {numberLabel}
+                </p>
+                <div className="min-w-0">
+                  <p className="truncate text-[10px] tracking-wider text-slate-400">
+                    {totalLabel}
+                  </p>
+                  <p
+                    className="truncate text-xs font-normal leading-tight text-slate-500"
+                    title={assignment.name}
+                  >
+                    {assignment.name}
+                  </p>
+                </div>
+              </div>
+              <div className="shrink-0 ml-3">
+                <MobileGridModeTabs
+                  value={gridMode}
+                  onChange={(mode) => onGridModeChange?.(mode)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
         {/* keyで列⇄グリッドの切り替え時に再マウントし、フェードインさせる */}
         <div
           key={expanded ? `grid-${gridMode}` : "list"}
           className={`fade-in-content ${
             expanded
-              ? gridMode === 4
-                ? "grid grid-cols-4 gap-x-0 gap-y-10"
-                : gridMode === 8
-                  ? "grid grid-cols-8 gap-x-0 gap-y-8"
-                  : "grid grid-cols-2 gap-x-0 gap-y-10 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+              ? gridMode === 1
+                ? "grid grid-cols-1 gap-x-0 gap-y-10"
+                : gridMode === 3
+                  ? "grid grid-cols-3 gap-0"
+                  : gridMode === 4
+                    ? "grid grid-cols-4 gap-x-0 gap-y-10"
+                    : gridMode === 8
+                      ? "grid grid-cols-8 gap-x-0 gap-y-8"
+                      : "grid grid-cols-2 gap-x-0 gap-y-10 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
               : "flex flex-col gap-10"
           }`}
         >
@@ -316,6 +344,7 @@ export default function AssignmentColumn({
               key={work.id}
               work={work}
               onClick={() => onWorkClick(work)}
+              hideInfo={expanded && gridMode === 3}
             />
           ))}
 
@@ -345,6 +374,7 @@ export default function AssignmentColumn({
 
         {/* Infinite scroll sentinel */}
         <div ref={sentinelRef} className="h-px" aria-hidden="true" />
+      </div>
       </div>
     </section>
   );
@@ -413,5 +443,46 @@ function ResponsiveIcon() {
         d="M10.5 19.5h-6A1.5 1.5 0 013 18V6a1.5 1.5 0 011.5-1.5h12A1.5 1.5 0 0118 6v3m-7.5 10.5v-3m0 3h3m-3-3H6m9 7.5h4.5A1.5 1.5 0 0021 19.5v-7.5a1.5 1.5 0 00-1.5-1.5H15a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5z"
       />
     </svg>
+  );
+}
+
+/**
+ * モバイル用グリッド列数切り替え（1列 / 3列）。アイコン表示。
+ */
+function MobileGridModeTabs({
+  value,
+  onChange,
+}: {
+  value: GridMode;
+  onChange: (mode: GridMode) => void;
+}) {
+  const options: { id: GridMode; icon: React.ReactNode; title: string }[] = [
+    { id: 1, icon: <StopIcon className="h-5 w-5" />, title: "1列表示" },
+    { id: 3, icon: <Squares2X2Icon className="h-5 w-5" />, title: "3列表示" },
+  ];
+
+  return (
+    <div
+      className="flex items-center overflow-hidden border border-slate-300"
+      role="group"
+      aria-label="グリッドの列数"
+    >
+      {options.map((opt) => (
+        <button
+          key={String(opt.id)}
+          type="button"
+          title={opt.title}
+          aria-pressed={value === opt.id}
+          onClick={() => onChange(opt.id)}
+          className={`flex h-10 w-10 items-center justify-center border-r border-slate-300 transition last:border-r-0 ${
+            value === opt.id
+              ? "bg-accent-a text-white"
+              : "bg-white text-slate-500"
+          }`}
+        >
+          {opt.icon}
+        </button>
+      ))}
+    </div>
   );
 }
