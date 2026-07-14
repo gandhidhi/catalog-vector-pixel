@@ -26,8 +26,8 @@ export default function WorkCardA({ work, onClick }: WorkCardAProps) {
         aria-label={`${work.studentName}の${work.assignmentName}を拡大表示`}
         className="group block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-a"
       >
-        {/* 額縁: 白いマットの内側に画像を余白付きで収める */}
-        <div className="aspect-square w-full bg-white p-2">
+        {/* 額縁: マットの内側に画像を余白付きで収める */}
+        <div className="-ml-px aspect-square w-[calc(100%+1px)] border border-slate-200 bg-slate-50 p-2">
           <div className="relative h-full w-full overflow-hidden bg-slate-100">
             {imgError ? (
               <div className="flex h-full w-full items-center justify-center text-slate-300">
@@ -59,11 +59,11 @@ export default function WorkCardA({ work, onClick }: WorkCardAProps) {
           </div>
         </div>
 
-        <p className="mt-2.5 truncate text-xs font-normal text-slate-500">{work.studentName}</p>
+        <p className="mt-2.5 truncate px-2 text-xs font-normal text-slate-500">{work.studentName}</p>
       </button>
 
       {/* タグの有無でカードの縦幅が変わらないよう、行の高さは常に確保する */}
-      <div className="mt-1.5 h-5">
+      <div className="mt-1.5 h-5 px-2">
         {work.badges.length > 0 && <BadgeRow badges={work.badges} />}
       </div>
     </div>

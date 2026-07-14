@@ -29,10 +29,14 @@ body {
 /* ライトボックス: 左上タイトルは細めに、下部キャプションは小さめに */
 .yarl__portal {
   --yarl__slide_title_font_weight: 500;
+  --yarl__color_text: rgb(51, 65, 85);
+  --yarl__color_button: rgb(255, 255, 255);
+  --yarl__color_button_active: rgb(255, 255, 255);
 }
 .yarl__slide_description {
   font-size: 12px !important;
   line-height: 1.6;
+  color: rgb(100, 116, 139);
 }
 
 /* 課題の展開切り替え時に作品グリッドをアルファでフェードインさせる */

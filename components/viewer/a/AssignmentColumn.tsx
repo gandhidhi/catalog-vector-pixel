@@ -8,9 +8,9 @@ import { GridMode, SortOptionA } from "./types";
 const PAGE_SIZE = 20;
 
 /** 拡縮（幅）アニメーションの長さ。ViewerA側のシーケンスと合わせること */
-export const EXPAND_ANIMATION_MS = 800;
+export const EXPAND_ANIMATION_MS = 500;
 /** フェードイン/アウトの長さ */
-export const FADE_ANIMATION_MS = 300;
+export const FADE_ANIMATION_MS = 200;
 
 interface AssignmentColumnProps {
   assignment: Assignment;
@@ -67,11 +67,34 @@ export default function AssignmentColumn({
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
+  // 拡大アニメーション完了後にtrueになり、右上UIをフェードイン表示する
+  const [expandAnimDone, setExpandAnimDone] = useState(false);
 
   const listRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   // フィルター変更中に届いた古いレスポンスを破棄するための通し番号
   const fetchIdRef = useRef(0);
+  const expandTimerRef = useRef<number | null>(null);
+
+  // expanded が true に変わったら EXPAND_ANIMATION_MS 後に expandAnimDone を true にする
+  useEffect(() => {
+    if (expanded) {
+      expandTimerRef.current = window.setTimeout(() => {
+        setExpandAnimDone(true);
+      }, EXPAND_ANIMATION_MS);
+    } else {
+      setExpandAnimDone(false);
+      if (expandTimerRef.current !== null) {
+        clearTimeout(expandTimerRef.current);
+        expandTimerRef.current = null;
+      }
+    }
+    return () => {
+      if (expandTimerRef.current !== null) {
+        clearTimeout(expandTimerRef.current);
+      }
+    };
+  }, [expanded]);
 
   const studentKey = studentIds.join(",");
   const badgeKey = badgeIds.join(",");
@@ -170,7 +193,7 @@ export default function AssignmentColumn({
       style={{
         transition: noTransition
           ? "none"
-          : `flex-grow ${EXPAND_ANIMATION_MS}ms ease-in-out, flex-basis ${EXPAND_ANIMATION_MS}ms ease-in-out, opacity ${FADE_ANIMATION_MS}ms ease-in-out`,
+          : `flex-grow ${EXPAND_ANIMATION_MS}ms ease-out, flex-basis ${EXPAND_ANIMATION_MS}ms ease-out, opacity ${FADE_ANIMATION_MS}ms ease-out`,
       }}
       aria-label={`課題${assignment.number}: ${assignment.name}`}
       aria-hidden={hiddenAway}
@@ -184,13 +207,17 @@ export default function AssignmentColumn({
             type="button"
             onClick={onCollapse}
             aria-label="縮小して全課題を表示"
-            className="flex w-full items-end gap-4 px-5 pb-4 pr-44 pt-6 text-left transition hover:bg-slate-200 active:bg-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-a md:px-8 md:pr-44"
+            className="flex w-full items-end gap-4 px-5 pb-4 pr-44 pt-6 text-left transition hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-a md:px-8 md:pr-44"
           >
             <p className="font-plex-mono text-2xl font-normal leading-none tracking-tight text-slate-500">
               {numberLabel}
             </p>
-            <div className="min-w-0">
-              <p className="text-[10px] tracking-wider text-slate-400">
+            <div
+              className={`min-w-0 transition-opacity duration-300 ${
+                expandAnimDone ? "opacity-100" : "invisible opacity-0"
+              }`}
+            >
+              <p className="truncate text-[10px] tracking-wider text-slate-400">
                 {totalLabel}
               </p>
               <p
@@ -202,7 +229,11 @@ export default function AssignmentColumn({
             </div>
           </button>
 
-          <div className="absolute bottom-4 right-5 flex items-center gap-3 md:right-8">
+          <div
+            className={`absolute bottom-4 right-5 flex items-center gap-3 transition-opacity duration-300 md:right-8 ${
+              expandAnimDone ? "opacity-100" : "opacity-0"
+            }`}
+          >
             {/* グリッド列数の切り替えタブ */}
             <GridModeTabs
               value={gridMode}
@@ -214,7 +245,7 @@ export default function AssignmentColumn({
               type="button"
               onClick={onCollapse}
               aria-label="縮小して全課題を表示"
-              className="flex h-7 w-7 items-center justify-center border border-slate-300 bg-white text-slate-500 transition hover:border-accent-a hover:text-accent-a active:bg-slate-200"
+              className="flex h-7 w-7 items-center justify-center border border-slate-300 bg-white text-slate-500 transition hover:border-accent-a hover:text-accent-a"
             >
               <svg
                 className="h-4 w-4"
@@ -239,14 +270,14 @@ export default function AssignmentColumn({
           type="button"
           onClick={onExpand}
           aria-label={`課題${assignment.number}を広げて表示`}
-          className="shrink-0 px-5 pb-4 pt-6 text-left transition hover:bg-slate-200 active:bg-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-a"
+          className="shrink-0 px-5 pb-4 pt-6 text-left transition hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-a"
         >
           <div className="flex items-end justify-between gap-3">
-            <p className="font-plex-mono text-2xl font-normal leading-none tracking-tight text-slate-500">
+            <p className="shrink-0 font-plex-mono text-2xl font-normal leading-none tracking-tight text-slate-500">
               {numberLabel}
             </p>
             <div className="min-w-0 text-right">
-              <p className="text-[10px] tracking-wider text-slate-400">
+              <p className="truncate text-[10px] tracking-wider text-slate-400">
                 {totalLabel}
               </p>
               <p
@@ -273,10 +304,10 @@ export default function AssignmentColumn({
           className={`fade-in-content ${
             expanded
               ? gridMode === 4
-                ? "grid grid-cols-4 gap-x-6 gap-y-10"
+                ? "grid grid-cols-4 gap-x-0 gap-y-10"
                 : gridMode === 8
-                  ? "grid grid-cols-8 gap-x-4 gap-y-8"
-                  : "grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+                  ? "grid grid-cols-8 gap-x-0 gap-y-8"
+                  : "grid grid-cols-2 gap-x-0 gap-y-10 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
               : "flex flex-col gap-10"
           }`}
         >
@@ -355,7 +386,7 @@ function GridModeTabs({
           className={`flex h-full w-8 items-center justify-center border-r border-slate-300 font-plex-mono text-xs transition last:border-r-0 ${
             value === opt.id
               ? "bg-accent-a text-white"
-              : "bg-white text-slate-500 hover:bg-slate-200 active:bg-slate-300"
+              : "bg-white text-slate-500 hover:bg-slate-200"
           }`}
         >
           {opt.label}

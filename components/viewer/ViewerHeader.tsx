@@ -10,7 +10,7 @@ export default function ViewerHeader() {
   return (
     <header className="shrink-0 border-b border-slate-200 bg-white font-plex-mono">
       <div className="flex items-center justify-between px-4 py-2 md:px-8">
-        <h1 className="text-lg font-medium text-slate-500">Adobe Works</h1>
+        <h1 className="text-lg font-light text-slate-500">Adobe Works</h1>
         <UIVersionSwitcher />
       </div>
     </header>

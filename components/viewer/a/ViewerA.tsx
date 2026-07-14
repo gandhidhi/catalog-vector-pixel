@@ -45,6 +45,9 @@ export default function ViewerA() {
     ? (assignments.find((a) => a.id === expandedId) ?? null)
     : null;
 
+  // レール（右側の課題切り替えUI）の表示状態: 全アニメーション完了後にtrue
+  const [railVisible, setRailVisible] = useState(false);
+
   // 展開課題同士の切り替え: 幅の移動アニメーションを止めてクロスフェードする
   const [fadeOutId, setFadeOutId] = useState<string | null>(null);
   const [noAnim, setNoAnim] = useState(false);
@@ -63,12 +66,14 @@ export default function ViewerA() {
    * ① 全作品と他課題のヘッダーをアルファでフェードアウト
    * ② 押下した課題の面を幅アニメーションで拡大
    * ③ 拡大後のグリッドをフェードイン
+   * ④ レール（右側の課題切り替えUI）をフェードイン
    */
   function handleExpand(id: string) {
     if (sequencing || fadeOutId !== null) return;
     setSequencing(true);
     setPhaseHideLists(true);
     setDimOthersExcept(id);
+    setRailVisible(false);
     switchTimersRef.current.push(
       window.setTimeout(() => {
         setExpandedId(id);
@@ -77,16 +82,18 @@ export default function ViewerA() {
             setPhaseHideLists(false);
             setDimOthersExcept(null);
             setSequencing(false);
+            setRailVisible(true);
           }, EXPAND_ANIMATION_MS),
         );
       }, FADE_ANIMATION_MS),
     );
   }
 
-  /** 縮小シーケンス（拡大の逆順） */
+  /** 縮小シーケンス: レールを即非表示→通常の逆順 */
   function handleCollapse() {
     if (sequencing || fadeOutId !== null || expandedId === null) return;
     setSequencing(true);
+    setRailVisible(false);
     setPhaseHideLists(true);
     switchTimersRef.current.push(
       window.setTimeout(() => {
@@ -238,7 +245,9 @@ export default function ViewerA() {
             <div
               ref={scrollRef}
               onScroll={updateArrows}
-              className="flex h-full min-w-0 flex-1 snap-x divide-x divide-slate-200 overflow-x-auto"
+              className={`flex h-full min-w-0 flex-1 snap-x divide-x divide-slate-200 overflow-x-auto ${
+                expandedAssignment ? "border-r border-slate-200" : ""
+              }`}
             >
               {assignments.map((assignment) => (
                 <AssignmentColumn
@@ -267,27 +276,29 @@ export default function ViewerA() {
               ))}
             </div>
 
-            {/* 右端: 他の課題への切り替えレール（展開時のみ幅を持つ） */}
+            {/* 右端: 他の課題への切り替えレール（展開時のみ表示） */}
             <aside
-              className={`flex shrink-0 flex-col border-slate-200 bg-slate-100 transition-all duration-[800ms] ease-in-out ${
-                expandedAssignment
-                  ? "w-12 border-l"
-                  : "w-0 overflow-hidden border-l-0"
+              className={`flex shrink-0 flex-col border-l border-slate-200 bg-slate-100 ease-in-out ${
+                railVisible
+                  ? "w-12 translate-x-0 opacity-100 transition-[opacity,transform] duration-200"
+                  : expandedAssignment
+                    ? "w-12 pointer-events-none translate-x-full opacity-0 transition-none"
+                    : "w-0 overflow-hidden opacity-0 transition-opacity duration-200"
               }`}
               aria-label="課題の切り替え"
-              aria-hidden={!expandedAssignment}
+              aria-hidden={!railVisible}
             >
               {assignments.map((a) => (
                 <button
                   key={a.id}
                   type="button"
-                  tabIndex={expandedAssignment ? 0 : -1}
+                  tabIndex={railVisible ? 0 : -1}
                   onClick={() => handleRailClick(a.id)}
                   title={`課題${a.number}: ${a.name}`}
                   className={`flex min-h-0 flex-1 items-center justify-center border-b border-slate-200 font-plex-mono text-xs transition last:border-b-0 ${
                     a.id === expandedId
                       ? "bg-accent-a text-white"
-                      : "text-slate-500 hover:bg-slate-300 hover:text-accent-a active:bg-slate-400"
+                      : "text-slate-500 hover:bg-slate-300 hover:text-accent-a"
                   }`}
                 >
                   {String(a.number).padStart(2, "0")}
@@ -297,13 +308,17 @@ export default function ViewerA() {
           </div>
         )}
 
-        {/* Paging arrows（通常の列表示のときだけ） */}
-        {!expandedAssignment && canScrollLeft && (
-          <PagingArrow direction={-1} onClick={() => scrollByColumn(-1)} />
-        )}
-        {!expandedAssignment && canScrollRight && (
-          <PagingArrow direction={1} onClick={() => scrollByColumn(1)} />
-        )}
+        {/* Paging arrows（通常の列表示のときだけ表示、フェードアニメーション） */}
+        <PagingArrow
+          direction={-1}
+          onClick={() => scrollByColumn(-1)}
+          visible={!expandedAssignment && !sequencing && canScrollLeft}
+        />
+        <PagingArrow
+          direction={1}
+          onClick={() => scrollByColumn(1)}
+          visible={!expandedAssignment && !sequencing && canScrollRight}
+        />
       </div>
 
       {/* Lightbox（全画面表示 + ズームUI） */}
@@ -332,8 +347,11 @@ export default function ViewerA() {
         controller={{ closeOnBackdropClick: true }}
         render={{ buttonPrev: () => null, buttonNext: () => null }}
         styles={{
-          container: { backgroundColor: "rgba(15, 23, 42, 0.92)" },
+          container: { backgroundColor: "rgba(248, 250, 252, 0.95)" },
+          icon: { color: "rgb(255, 255, 255)" },
+          button: { color: "rgb(255, 255, 255)" },
         }}
+        className="yarl-light"
       />
     </div>
   );
@@ -342,18 +360,22 @@ export default function ViewerA() {
 function PagingArrow({
   direction,
   onClick,
+  visible,
 }: {
   direction: 1 | -1;
   onClick: () => void;
+  visible: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label={direction === 1 ? "次の課題へ" : "前の課題へ"}
-      className={`absolute top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-300 bg-white shadow-[0_10px_35px_rgba(0,0,0,0.35)] transition hover:-translate-y-[calc(50%+2px)] hover:shadow-[0_14px_40px_rgba(0,0,0,0.45)] ${
+      aria-hidden={!visible}
+      tabIndex={visible ? 0 : -1}
+      className={`absolute top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-300 bg-white shadow-[0_10px_35px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-[calc(50%+2px)] hover:shadow-[0_14px_40px_rgba(0,0,0,0.45)] ${
         direction === 1 ? "right-3" : "left-3"
-      }`}
+      } ${visible ? "opacity-100" : "pointer-events-none opacity-0"}`}
     >
       <svg
         className="h-4 w-4 text-slate-600"

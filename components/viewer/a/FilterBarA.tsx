@@ -194,7 +194,7 @@ function SortDropdown({
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className="flex items-center gap-2 px-4 py-[7px] text-xs text-slate-400 transition hover:bg-slate-200 hover:text-slate-500 active:bg-slate-300"
+        className="flex items-center gap-2 px-4 py-[7px] text-xs text-slate-400 transition hover:bg-slate-200 hover:text-slate-500"
       >
         <span className="tracking-widest text-slate-400">ソート :</span>
         <span className="font-medium text-accent-a">{current.label}</span>
@@ -259,7 +259,7 @@ function TagDropdown({
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className="flex items-center gap-2 px-4 py-[7px] text-xs text-slate-400 transition hover:bg-slate-200 hover:text-slate-500 active:bg-slate-300"
+        className="flex items-center gap-2 px-4 py-[7px] text-xs text-slate-400 transition hover:bg-slate-200 hover:text-slate-500"
       >
         <span className="tracking-widest text-slate-400">タグ :</span>
         <span
