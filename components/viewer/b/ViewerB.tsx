@@ -189,8 +189,9 @@ export default function ViewerB() {
       // グリッドのtopからスクロールコンテナのtopまでの距離
       const gridTop = gridEl.offsetTop;
       const scrollTop = scrollEl!.scrollTop;
-      // フォーカスライン = スクロール位置 + 2行分先読み + 追加オフセット（タブ直下より少し上でカラー化開始）
-      const focusY = scrollTop - gridTop + bento.unit * 2 + bento.unit * 0.5;
+      // フォーカスライン = タブエリアの真下（スクロール領域の上端）。
+      // ここに掛かっている行がアクティブになる
+      const focusY = scrollTop - gridTop;
       const row = Math.max(0, Math.floor(focusY / bento.unit));
       setActiveRow(row);
     }
