@@ -110,7 +110,7 @@ function UIVersionDropdown() {
         aria-label="UIバージョン切り替え"
         className={`flex h-8 w-8 items-center justify-center border transition ${
           isB
-            ? "border-orange-300 text-stone-500 hover:border-orange-500 hover:text-orange-600"
+            ? "border-orange-300 text-orange-500 hover:border-orange-500 hover:text-orange-600"
             : "border-slate-300 text-slate-500 hover:border-accent-a hover:text-accent-a"
         }`}
       >

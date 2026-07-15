@@ -159,6 +159,10 @@ export default function ViewerB() {
   const gridRef = useRef<HTMLDivElement>(null);
   const [bento, setBento] = useState({ unit: 0, cols: 8 });
 
+  // モバイル: スクロール位置に基づくアクティブ行（タブバー直下の行をカラー表示）
+  const [activeRow, setActiveRow] = useState(0);
+  const headingRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const el = gridRef.current;
     if (!el) return;
@@ -173,6 +177,28 @@ export default function ViewerB() {
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
+
+  // スクロールでアクティブ行を更新
+  useEffect(() => {
+    const scrollEl = listRef.current;
+    const gridEl = gridRef.current;
+    if (!scrollEl || !gridEl) return;
+
+    function handleScroll() {
+      if (!gridEl || bento.unit <= 0) return;
+      // グリッドのtopからスクロールコンテナのtopまでの距離
+      const gridTop = gridEl.offsetTop;
+      const scrollTop = scrollEl!.scrollTop;
+      // フォーカスライン = スクロール位置 + 2行分先読み（早めにカラー化）
+      const focusY = scrollTop - gridTop + bento.unit * 2;
+      const row = Math.max(0, Math.floor(focusY / bento.unit));
+      setActiveRow(row);
+    }
+
+    handleScroll();
+    scrollEl.addEventListener("scroll", handleScroll, { passive: true });
+    return () => scrollEl.removeEventListener("scroll", handleScroll);
+  }, [bento.unit]);
 
   // テンプレート方式: タグ付き作品を大セルにするが、
   // 大セル同士の間に最低 MIN_GAP 作品を挟んでリズムを一定に保つ。
@@ -189,6 +215,79 @@ export default function ViewerB() {
       return false;
     });
   }, [works]);
+
+  // Dense packingアルゴリズムをシミュレートして各作品の行番号を計算
+  const workRows = useMemo(() => {
+    const cols = bento.cols;
+    if (cols === 0) return works.map(() => 0);
+
+    // grid: 各セルが埋まっているか。行は動的に増える
+    const grid: boolean[][] = [];
+    function ensureRows(r: number) {
+      while (grid.length <= r) grid.push(new Array(cols).fill(false));
+    }
+    function canPlace(row: number, col: number, span: number): boolean {
+      ensureRows(row + span - 1);
+      for (let r = row; r < row + span; r++) {
+        for (let c = col; c < col + span; c++) {
+          if (c >= cols || grid[r][c]) return false;
+        }
+      }
+      return true;
+    }
+    function place(row: number, col: number, span: number) {
+      for (let r = row; r < row + span; r++) {
+        for (let c = col; c < col + span; c++) {
+          grid[r][c] = true;
+        }
+      }
+    }
+
+    return works.map((_, i) => {
+      const span = largeFlags[i] ? 2 : 1;
+      // dense: 最初に見つかる空きに配置
+      ensureRows(0);
+      for (let r = 0; ; r++) {
+        ensureRows(r + span - 1);
+        for (let c = 0; c <= cols - span; c++) {
+          if (canPlace(r, c, span)) {
+            place(r, c, span);
+            return r; // この作品が開始する行
+          }
+        }
+      }
+    });
+  }, [works, largeFlags, bento.cols]);
+
+  // アクティブ行にかかる作品かどうか判定
+  // 大セルがアクティブ行にかかる場合、その大セルが占める行範囲にある全作品もカラーにする
+  const activeRowRange = useMemo(() => {
+    // まず基本のアクティブ範囲（activeRow と activeRow+1）
+    let minRow = activeRow;
+    let maxRow = activeRow + 1;
+
+    // この範囲にかかる大セルがあれば、その大セルの全行範囲に拡張
+    for (let i = 0; i < works.length; i++) {
+      if (!largeFlags[i]) continue;
+      const row = workRows[i] ?? 0;
+      const span = 2;
+      // 大セルがアクティブ範囲と重なるか
+      if (row <= maxRow && row + span > minRow) {
+        minRow = Math.min(minRow, row);
+        maxRow = Math.max(maxRow, row + span - 1);
+      }
+    }
+    return { minRow, maxRow };
+  }, [works, largeFlags, workRows, activeRow]);
+
+  const isWorkActive = useCallback(
+    (index: number) => {
+      const row = workRows[index] ?? 0;
+      const span = largeFlags[index] ? 2 : 1;
+      return row <= activeRowRange.maxRow && row + span - 1 >= activeRowRange.minRow;
+    },
+    [workRows, largeFlags, activeRowRange],
+  );
 
   // マスタ情報の取得
   useEffect(() => {
@@ -407,6 +506,7 @@ export default function ViewerB() {
               key={work.id}
               work={work}
               large={largeFlags[i] ?? false}
+              active={isWorkActive(i)}
               onClick={() => setSelectedWork(work)}
             />
           ))}
@@ -481,10 +581,12 @@ export default function ViewerB() {
 function WorkCardB({
   work,
   large,
+  active,
   onClick,
 }: {
   work: WorkItem;
   large: boolean;
+  active: boolean;
   onClick: () => void;
 }) {
   const [imgError, setImgError] = useState(false);
@@ -522,7 +624,11 @@ function WorkCardB({
             alt={`${work.studentName} - ${work.assignmentName}`}
             fill
             sizes={large ? "(max-width: 768px) 100vw, 640px" : "(max-width: 768px) 50vw, 320px"}
-            className="object-cover grayscale contrast-110 transition duration-150 group-hover:grayscale-0 group-hover:contrast-100"
+            className={`object-cover transition duration-150 ${
+              active
+                ? "grayscale-0 contrast-100 md:grayscale md:contrast-110 md:group-hover:grayscale-0 md:group-hover:contrast-100"
+                : "grayscale contrast-110 md:group-hover:grayscale-0 md:group-hover:contrast-100"
+            }`}
             onError={() => setImgError(true)}
           />
         )}
@@ -533,25 +639,33 @@ function WorkCardB({
           <>
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 bg-orange-400 mix-blend-screen transition-opacity duration-150 group-hover:opacity-0"
+              className={`pointer-events-none absolute inset-0 bg-orange-400 mix-blend-screen transition-opacity duration-150 ${
+                active ? "opacity-0 md:opacity-100 md:group-hover:opacity-0" : "md:group-hover:opacity-0"
+              }`}
             />
             {/* 白側をほんのりオレンジに染める（multiply合成） */}
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 bg-orange-100 mix-blend-multiply transition-opacity duration-150 group-hover:opacity-0"
+              className={`pointer-events-none absolute inset-0 bg-orange-100 mix-blend-multiply transition-opacity duration-150 ${
+                active ? "opacity-0 md:opacity-100 md:group-hover:opacity-0" : "md:group-hover:opacity-0"
+              }`}
             />
           </>
         )}
 
         {/* 学生名（左下・角にぴったり） */}
-        <span className="absolute bottom-0 left-0 max-w-[70%] truncate border border-orange-100 bg-white/50 px-1.5 py-0.5 font-dot text-[10px] text-orange-400 transition-transform duration-150 group-hover:translate-y-full">
+        <span className={`absolute bottom-0 left-0 max-w-[70%] truncate border border-orange-100 bg-white/50 px-1.5 py-0.5 font-dot text-[10px] text-orange-400 transition-transform duration-150 md:group-hover:translate-y-full ${
+          active ? "translate-y-full md:translate-y-0" : ""
+        }`}>
           {work.studentName}
         </span>
 
         {/* タグ数（右下・角にぴったり） */}
         {work.badges.length > 0 && (
           <span
-            className="absolute bottom-0 right-0 inline-flex items-center gap-1 border border-orange-100 bg-white/50 px-1.5 py-0.5 font-dot text-[10px] text-orange-400 transition-transform duration-150 group-hover:translate-y-full"
+            className={`absolute bottom-0 right-0 inline-flex items-center gap-1 border border-orange-100 bg-white/50 px-1.5 py-0.5 font-dot text-[10px] text-orange-400 transition-transform duration-150 md:group-hover:translate-y-full ${
+              active ? "translate-y-full md:translate-y-0" : ""
+            }`}
             title={work.badges.map((b) => b.name).join(" / ")}
           >
             <span aria-hidden="true">⭐</span>
