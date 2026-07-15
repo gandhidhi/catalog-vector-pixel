@@ -283,7 +283,7 @@ export default function ViewerA() {
         assignments={assignments}
         mobileTabId={mobileTabId}
         onMobileTabChange={setMobileTabId}
-        mobileHidden={mobileHeaderHidden}
+        mobileHidden={false}
       />
 
       {/* Assignment columns */}
