@@ -7,6 +7,7 @@ import {
 import ViewerHeader from "@/components/viewer/ViewerHeader";
 import ClassicViewer from "@/components/viewer/classic/ClassicViewer";
 import ViewerA from "@/components/viewer/a/ViewerA";
+import ViewerB from "@/components/viewer/b/ViewerB";
 
 /**
  * 公開ビューアのエントリーポイント。
@@ -33,7 +34,18 @@ function ViewerContent() {
     );
   }
 
-  // Aパターン（Bは準備中のため、それ以外はすべてAを表示）
+  if (version === "b") {
+    return (
+      <main className="flex h-dvh flex-col bg-orange-100 font-plex-sans">
+        <ViewerHeader />
+        <div className="min-h-0 flex-1">
+          <ViewerB />
+        </div>
+      </main>
+    );
+  }
+
+  // Aパターン
   return (
     <main className="flex h-dvh flex-col bg-slate-50 font-plex-sans">
       {/* デスクトップ: ヘッダーは常時表示 */}

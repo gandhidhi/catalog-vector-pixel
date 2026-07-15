@@ -16,6 +16,7 @@ const config: Config = {
       fontFamily: {
         "plex-sans": ["var(--font-ibm-plex-sans-jp)", "sans-serif"],
         "plex-mono": ["var(--font-ibm-plex-mono)", "monospace"],
+        dot: ["var(--font-dotgothic16)", "sans-serif"],
       },
     },
   },

@@ -10,10 +10,23 @@ import { UI_VERSIONS, useUIVersion } from "./ui-version";
  * モバイル: アイコン + プルダウン
  */
 export default function ViewerHeader() {
+  const { version } = useUIVersion();
+  const isB = version === "b";
+
   return (
-    <header className="shrink-0 border-b border-slate-200 bg-white font-plex-mono">
+    <header
+      className={`shrink-0 border-b font-plex-mono ${
+        isB ? "border-orange-200 bg-orange-100" : "border-slate-200 bg-white"
+      }`}
+    >
       <div className="flex items-center justify-between px-4 py-2 md:px-8">
-        <h1 className="text-lg font-light text-slate-500">Adobe Works</h1>
+        <h1
+          className={`text-lg font-light ${
+            isB ? "font-dot text-orange-600" : "text-slate-500"
+          }`}
+        >
+          Adobe Works
+        </h1>
         {/* デスクトップ: ボタングループ */}
         <div className="hidden md:block">
           <UIVersionButtonGroup />
@@ -29,10 +42,13 @@ export default function ViewerHeader() {
 
 function UIVersionButtonGroup() {
   const { version, setVersion } = useUIVersion();
+  const isB = version === "b";
 
   return (
     <div
-      className="flex items-center overflow-hidden rounded-md border border-slate-300"
+      className={`flex items-center overflow-hidden rounded-md border ${
+        isB ? "border-orange-300" : "border-slate-300"
+      }`}
       role="group"
       aria-label="UIバージョン切り替え"
     >
@@ -44,12 +60,20 @@ function UIVersionButtonGroup() {
           onClick={() => v.available && setVersion(v.id)}
           title={v.available ? `UIパターン${v.label}` : "準備中"}
           aria-pressed={version === v.id}
-          className={`px-3 py-1 text-xs font-medium transition border-r border-slate-300 last:border-r-0 ${
+          className={`px-3 py-1 text-xs font-medium transition border-r last:border-r-0 ${
+            isB ? "border-orange-300" : "border-slate-300"
+          } ${
             version === v.id
-              ? "bg-accent-a text-white"
+              ? isB
+                ? "bg-orange-500 text-white"
+                : "bg-accent-a text-white"
               : v.available
-                ? "bg-white text-slate-600 hover:bg-slate-200"
-                : "cursor-not-allowed bg-white text-slate-300"
+                ? isB
+                  ? "bg-orange-100 text-orange-500 hover:bg-orange-200"
+                  : "bg-white text-slate-600 hover:bg-slate-200"
+                : isB
+                  ? "cursor-not-allowed bg-orange-100 text-orange-300"
+                  : "cursor-not-allowed bg-white text-slate-300"
           }`}
         >
           {v.label}
@@ -75,8 +99,7 @@ function UIVersionDropdown() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
-  const currentLabel =
-    UI_VERSIONS.find((v) => v.id === version)?.label ?? "A";
+  const isB = version === "b";
 
   return (
     <div ref={ref} className="relative">
@@ -85,13 +108,21 @@ function UIVersionDropdown() {
         onClick={() => setOpen(!open)}
         aria-expanded={open}
         aria-label="UIバージョン切り替え"
-        className="flex h-8 w-8 items-center justify-center border border-slate-300 text-slate-500 transition hover:border-accent-a hover:text-accent-a"
+        className={`flex h-8 w-8 items-center justify-center border transition ${
+          isB
+            ? "border-orange-300 text-stone-500 hover:border-orange-500 hover:text-orange-600"
+            : "border-slate-300 text-slate-500 hover:border-accent-a hover:text-accent-a"
+        }`}
       >
         <PaintBrushIcon className="h-4 w-4" />
       </button>
 
       {open && (
-        <div className="fixed right-4 top-12 z-50 min-w-[8rem] border border-slate-200 bg-white shadow-lg">
+        <div
+          className={`fixed right-4 top-12 z-50 min-w-[8rem] border bg-white shadow-lg ${
+            isB ? "border-orange-200" : "border-slate-200"
+          }`}
+        >
           {UI_VERSIONS.map((v) => (
             <button
               key={v.id}
@@ -105,9 +136,13 @@ function UIVersionDropdown() {
               }}
               className={`block w-full px-4 py-2.5 text-left text-xs transition ${
                 version === v.id
-                  ? "font-medium text-accent-a bg-accent-a-soft"
+                  ? isB
+                    ? "bg-orange-50 font-medium text-orange-600"
+                    : "font-medium text-accent-a bg-accent-a-soft"
                   : v.available
-                    ? "text-slate-500 hover:bg-slate-100"
+                    ? isB
+                      ? "text-stone-500 hover:bg-orange-50"
+                      : "text-slate-500 hover:bg-slate-100"
                     : "cursor-not-allowed text-slate-300"
               }`}
             >

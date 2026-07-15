@@ -18,7 +18,7 @@ export interface UIVersionOption {
 
 export const UI_VERSIONS: UIVersionOption[] = [
   { id: "a", label: "A", available: true },
-  { id: "b", label: "B", available: false },
+  { id: "b", label: "B", available: true },
   { id: "classic", label: "旧", available: true },
 ];
 

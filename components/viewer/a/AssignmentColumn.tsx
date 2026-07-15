@@ -166,6 +166,8 @@ export default function AssignmentColumn({
     };
   });
 
+  const sentinelVisibleRef = useRef(false);
+
   useEffect(() => {
     const rootEl = listRef.current;
     const target = sentinelRef.current;
@@ -173,6 +175,7 @@ export default function AssignmentColumn({
 
     const observer = new IntersectionObserver(
       (entries) => {
+        sentinelVisibleRef.current = entries[0].isIntersecting;
         if (entries[0].isIntersecting) {
           loadMoreRef.current();
         }
@@ -182,6 +185,14 @@ export default function AssignmentColumn({
     observer.observe(target);
     return () => observer.disconnect();
   }, []);
+
+  // 読み込み完了時にセンチネルがまだ画面内なら続きを読む
+  // （Observerは「見えた瞬間」しか発火しないため、その取りこぼしを拾う）
+  useEffect(() => {
+    if (sentinelVisibleRef.current && !loading && page < totalPages) {
+      fetchPage(page + 1, true);
+    }
+  }, [loading, page, totalPages, fetchPage]);
 
   const numberLabel = String(assignment.number).padStart(2, "0");
   const totalLabel = loading && works.length === 0 ? "…" : `${total} 作品`;
