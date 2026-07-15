@@ -189,8 +189,8 @@ export default function ViewerB() {
       // グリッドのtopからスクロールコンテナのtopまでの距離
       const gridTop = gridEl.offsetTop;
       const scrollTop = scrollEl!.scrollTop;
-      // フォーカスライン = スクロール位置 + 2行分先読み（早めにカラー化）
-      const focusY = scrollTop - gridTop + bento.unit * 2;
+      // フォーカスライン = スクロール位置 + 2行分先読み + 追加オフセット（タブ直下より少し上でカラー化開始）
+      const focusY = scrollTop - gridTop + bento.unit * 2 + bento.unit * 0.5;
       const row = Math.max(0, Math.floor(focusY / bento.unit));
       setActiveRow(row);
     }
@@ -426,11 +426,11 @@ export default function ViewerB() {
 
   return (
     <div
-      className="texture-grain relative flex h-full flex-col bg-orange-100"
+      className="texture-grain relative flex h-full flex-col bg-orange-100 bg-[length:25vw_100%] md:bg-[length:180px_100%]"
       style={{
         // レイアウトとは無関係の装飾縦線（ごく薄いオレンジ）
         backgroundImage:
-          "repeating-linear-gradient(90deg, rgba(254, 215, 170, 0.6) 0px, rgba(254, 215, 170, 0.6) 1px, transparent 1px, transparent 180px)",
+          "repeating-linear-gradient(90deg, rgba(254, 215, 170, 0.6) 0px, rgba(254, 215, 170, 0.6) 1px, transparent 1px, transparent 100%)",
       }}
     >
       {/* 課題タブ（すべて + 課題1〜7）+ 右端の検索ボタン

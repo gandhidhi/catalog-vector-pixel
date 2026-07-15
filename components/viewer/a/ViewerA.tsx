@@ -41,42 +41,6 @@ export default function ViewerA() {
 
   // モバイル: 選択中の課題タブ（最初は1番目）
   const [mobileTabId, setMobileTabId] = useState<string | null>(null);
-  // モバイル: スクロール方向によるヘッダー+タブの表示/非表示
-  const [mobileHeaderHidden, setMobileHeaderHidden] = useState(false);
-  const mobileScrollRef = useRef({ lastY: 0, accDelta: 0 });
-
-  function handleMobileScroll(scrollTop: number) {
-    const prev = mobileScrollRef.current.lastY;
-    const delta = scrollTop - prev;
-    mobileScrollRef.current.lastY = scrollTop;
-
-    // 先頭付近（80px以下）では常にヘッダーを表示
-    if (scrollTop < 80) {
-      if (mobileHeaderHidden) {
-        setMobileHeaderHidden(false);
-        mobileScrollRef.current.accDelta = 0;
-      }
-      return;
-    }
-
-    // 同じ方向にaccDeltaを蓄積し、しきい値を超えたら切り替え
-    if ((delta > 0 && mobileScrollRef.current.accDelta >= 0) ||
-        (delta < 0 && mobileScrollRef.current.accDelta <= 0)) {
-      mobileScrollRef.current.accDelta += delta;
-    } else {
-      // 方向が変わったらリセット
-      mobileScrollRef.current.accDelta = delta;
-    }
-
-    const acc = mobileScrollRef.current.accDelta;
-    if (acc > 30 && !mobileHeaderHidden) {
-      setMobileHeaderHidden(true);
-      mobileScrollRef.current.accDelta = 0;
-    } else if (acc < -30 && mobileHeaderHidden) {
-      setMobileHeaderHidden(false);
-      mobileScrollRef.current.accDelta = 0;
-    }
-  }
 
   // 課題読み込み後にデフォルトのタブを設定
   useEffect(() => {
@@ -255,15 +219,9 @@ export default function ViewerA() {
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      {/* モバイル: ヘッダー（スクロールで隠れる） */}
-      <div
-        className={`md:hidden shrink-0 grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
-          mobileHeaderHidden ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"
-        }`}
-      >
-        <div className="overflow-hidden">
-          <ViewerHeader />
-        </div>
+      {/* モバイル: ヘッダー（常時表示） */}
+      <div className="md:hidden shrink-0">
+        <ViewerHeader />
       </div>
 
       <FilterBarA
@@ -360,7 +318,6 @@ export default function ViewerA() {
                       onGridModeChange={setMobileGridMode}
                       onExpand={() => {}}
                       onCollapse={() => {}}
-                      onScrollY={handleMobileScroll}
                     />
                   ))}
               </div>
