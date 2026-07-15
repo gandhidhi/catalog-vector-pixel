@@ -5,8 +5,8 @@ import { FilterOption, SortOptionA } from "@/components/viewer/a/types";
 
 const SORT_OPTIONS: { value: SortOptionA; label: string }[] = [
   { value: "random", label: "ランダム" },
-  { value: "student_asc", label: "学籍番号 ↑" },
-  { value: "student_desc", label: "学籍番号 ↓" },
+  { value: "student_asc", label: "番号昇順" },
+  { value: "student_desc", label: "番号降順" },
 ];
 
 interface SearchMenuBProps {

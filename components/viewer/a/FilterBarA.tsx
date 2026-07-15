@@ -6,8 +6,8 @@ import { FilterOption, SortOptionA } from "./types";
 
 const SORT_OPTIONS: { value: SortOptionA; label: string }[] = [
   { value: "random", label: "ランダム" },
-  { value: "student_asc", label: "学籍番号 ↑" },
-  { value: "student_desc", label: "学籍番号 ↓" },
+  { value: "student_asc", label: "番号昇順" },
+  { value: "student_desc", label: "番号降順" },
 ];
 
 interface FilterBarAProps {
@@ -27,6 +27,9 @@ interface FilterBarAProps {
   onThreeTagsChange: (value: boolean) => void;
   sortBy: SortOptionA;
   onSortChange: (sort: SortOptionA) => void;
+  /** 固定モード（デスクトップ専用）: 学生の行位置を揃えて全列同期スクロール */
+  pinned?: boolean;
+  onPinnedChange?: (value: boolean) => void;
   /** 課題一覧（モバイルタブ用） */
   assignments?: { id: string; number: number; name: string }[];
   /** モバイルで選択中の課題ID */
@@ -75,6 +78,8 @@ export default function FilterBarA(props: FilterBarAProps) {
     onThreeTagsChange,
     sortBy,
     onSortChange,
+    pinned = false,
+    onPinnedChange,
   } = props;
 
   // 検索エリアの拡縮（折りたたみ）状態
@@ -84,6 +89,7 @@ export default function FilterBarA(props: FilterBarAProps) {
   const activeSummary: string[] = [];
   if (appliedCount > 0) activeSummary.push(`検索: ${appliedCount}名`);
   if (tagCount > 0) activeSummary.push(`タグ: ${tagCount}件`);
+  if (pinned) activeSummary.push("固定: オン");
 
   return (
     <div className="relative shrink-0 border-b border-slate-200 bg-white">
@@ -132,7 +138,11 @@ export default function FilterBarA(props: FilterBarAProps) {
             {/* ソート・タグ: px-4のタッチ余白ぶんをネガティブマージンで相殺し、
                 検索開始ボタンとの見た目の間隔（約20px）を揃える */}
             <div className="-ml-5 flex items-center -space-x-3">
-              <SortDropdown sortBy={sortBy} onSortChange={onSortChange} />
+              <SortDropdown
+                sortBy={sortBy}
+                onSortChange={onSortChange}
+                hideRandom={pinned}
+              />
               {badgeTypes.length > 0 && (
                 <TagDropdown
                   badgeTypes={badgeTypes}
@@ -142,6 +152,31 @@ export default function FilterBarA(props: FilterBarAProps) {
                   onThreeTagsChange={onThreeTagsChange}
                 />
               )}
+
+              {/* 固定トグル（デスクトップ専用）:
+                  学籍番号順に行を揃えて全課題を同期スクロールするモード */}
+              <button
+                type="button"
+                role="switch"
+                aria-checked={pinned}
+                aria-label="固定モード"
+                onClick={() => onPinnedChange?.(!pinned)}
+                className="flex items-center gap-2 px-4 py-[7px] text-xs transition hover:bg-slate-200"
+              >
+                <span className="tracking-widest text-slate-400">固定 :</span>
+                <span
+                  aria-hidden="true"
+                  className={`relative inline-flex h-4 w-8 shrink-0 items-center rounded-full transition-colors duration-200 ${
+                    pinned ? "bg-accent-a" : "bg-slate-300"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-3 w-3 rounded-full bg-white shadow transition-transform duration-200 ${
+                      pinned ? "translate-x-[18px]" : "translate-x-0.5"
+                    }`}
+                  />
+                </span>
+              </button>
             </div>
           </>
         )}
@@ -176,16 +211,21 @@ function DropdownChevron({ open }: { open: boolean }) {
 function SortDropdown({
   sortBy,
   onSortChange,
+  hideRandom = false,
 }: {
   sortBy: SortOptionA;
   onSortChange: (sort: SortOptionA) => void;
+  /** 固定モード中はランダムを選べない（学籍番号順が前提のため） */
+  hideRandom?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useOutsideClose(ref, () => setOpen(false), open);
 
-  const current =
-    SORT_OPTIONS.find((o) => o.value === sortBy) ?? SORT_OPTIONS[0];
+  const options = hideRandom
+    ? SORT_OPTIONS.filter((o) => o.value !== "random")
+    : SORT_OPTIONS;
+  const current = options.find((o) => o.value === sortBy) ?? options[0];
 
   return (
     <div ref={ref} className="relative">
@@ -202,7 +242,7 @@ function SortDropdown({
 
       {open && (
         <div className="absolute left-0 top-full z-20 mt-2 min-w-[10rem] border border-slate-200 bg-white shadow-lg">
-          {SORT_OPTIONS.map((opt) => (
+          {options.map((opt) => (
             <button
               key={opt.value}
               type="button"

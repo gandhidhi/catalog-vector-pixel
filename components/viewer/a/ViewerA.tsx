@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronRightIcon, ChevronLeftIcon } from "@heroicons/react/24/outline";
-import { Assignment, WorkItem } from "@/lib/types";
+import { Assignment, WorkItem, WorkListResponse } from "@/lib/types";
 import Lightbox from "yet-another-react-lightbox";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import Captions from "yet-another-react-lightbox/plugins/captions";
@@ -15,6 +15,7 @@ import AssignmentColumn, {
   FADE_ANIMATION_MS,
 } from "./AssignmentColumn";
 import { useStudentOptions } from "./useStudentOptions";
+import PinnedColumns from "./PinnedColumns";
 import { FilterOption, GridMode, SortOptionA } from "./types";
 
 /**
@@ -48,6 +49,17 @@ export default function ViewerA() {
       setMobileTabId(assignments[0].id);
     }
   }, [assignments, mobileTabId]);
+
+  // 固定モード（デスクトップ専用）: 学生の行位置を揃えて全列同期スクロール
+  const [pinned, setPinned] = useState(false);
+  const [pinnedLoading, setPinnedLoading] = useState(false);
+  const [pinnedStudents, setPinnedStudents] = useState<
+    { id: string; name: string }[]
+  >([]);
+  const [pinnedWorks, setPinnedWorks] = useState<
+    Map<string, Map<string, WorkItem>>
+  >(new Map());
+  const pinnedFetchIdRef = useRef(0);
 
   // 展開表示中の課題ID（nullなら通常の列表示）
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -142,6 +154,79 @@ export default function ViewerA() {
       }, FADE_ANIMATION_MS),
     );
   }
+
+  /** 固定モードのON/OFF。ONにする際は展開状態と進行中のアニメーションを畳む */
+  function handlePinnedChange(value: boolean) {
+    setPinned(value);
+    if (value) {
+      switchTimersRef.current.forEach((t) => clearTimeout(t));
+      switchTimersRef.current = [];
+      setExpandedId(null);
+      setRailVisible(false);
+      setSequencing(false);
+      setPhaseHideLists(false);
+      setDimOthersExcept(null);
+      setFadeOutId(null);
+      setNoAnim(false);
+      // 固定モードは学籍番号順が前提。ランダムのときは昇順に切り替える
+      if (sortBy === "random") setSortBy("student_asc");
+    }
+  }
+
+  // 固定モード用データ: 全作品を学籍番号昇順で取得し、
+  // 学生の並び順（＝学籍番号順）と 学生×課題 の対応表を作る
+  useEffect(() => {
+    if (!pinned) return;
+    const fetchId = ++pinnedFetchIdRef.current;
+
+    async function fetchAll() {
+      setPinnedLoading(true);
+      try {
+        const students: { id: string; name: string }[] = [];
+        const seen = new Set<string>();
+        const map = new Map<string, Map<string, WorkItem>>();
+
+        let page = 1;
+        let totalPages = 1;
+        while (page <= totalPages && page <= 10) {
+          const res = await fetch(
+            `/api/works?page=${page}&pageSize=100&sortBy=student_asc`,
+          );
+          if (!res.ok) throw new Error("Failed to fetch works");
+          const data: WorkListResponse = await res.json();
+          totalPages = data.totalPages;
+
+          for (const w of data.works) {
+            if (!seen.has(w.studentId)) {
+              seen.add(w.studentId);
+              students.push({ id: w.studentId, name: w.studentName });
+            }
+            let byAssignment = map.get(w.studentId);
+            if (!byAssignment) {
+              byAssignment = new Map();
+              map.set(w.studentId, byAssignment);
+            }
+            if (!byAssignment.has(w.assignmentId)) {
+              byAssignment.set(w.assignmentId, w);
+            }
+          }
+          page++;
+        }
+
+        if (fetchId !== pinnedFetchIdRef.current) return;
+        setPinnedStudents(students);
+        setPinnedWorks(map);
+      } catch {
+        // 失敗時は現状表示を維持
+      } finally {
+        if (fetchId === pinnedFetchIdRef.current) {
+          setPinnedLoading(false);
+        }
+      }
+    }
+
+    fetchAll();
+  }, [pinned]);
 
   // Fetch assignments and badge types on mount
   useEffect(() => {
@@ -238,6 +323,8 @@ export default function ViewerA() {
         onThreeTagsChange={setThreeTagsOnly}
         sortBy={sortBy}
         onSortChange={setSortBy}
+        pinned={pinned}
+        onPinnedChange={handlePinnedChange}
         assignments={assignments}
         mobileTabId={mobileTabId}
         onMobileTabChange={setMobileTabId}
@@ -264,13 +351,30 @@ export default function ViewerA() {
         ) : (
           /* 全列を常に描画し、展開時は他列を幅0に畳んでアニメーションさせる */
           <div className="flex h-full bg-slate-50">
+            {/* Desktop（固定モード）: 学生の行位置を揃えた同期スクロールグリッド */}
+            {pinned && (
+              <div className="hidden h-full min-w-0 flex-1 md:block">
+                <PinnedColumns
+                  assignments={assignments}
+                  students={pinnedStudents}
+                  worksByStudent={pinnedWorks}
+                  loading={pinnedLoading}
+                  sortBy={sortBy}
+                  appliedStudentIds={appliedStudentIds}
+                  badgeIds={selectedBadges}
+                  minBadges={threeTagsOnly ? 3 : 0}
+                  onWorkClick={setSelectedWork}
+                />
+              </div>
+            )}
+
             {/* Desktop: 全カラム横並び */}
             <div
               ref={scrollRef}
               onScroll={updateArrows}
-              className={`hidden h-full min-w-0 flex-1 snap-x divide-x divide-slate-200 overflow-x-auto md:flex ${
-                expandedAssignment ? "border-r border-slate-200" : ""
-              }`}
+              className={`h-full min-w-0 flex-1 snap-x divide-x divide-slate-200 overflow-x-auto ${
+                pinned ? "hidden" : "hidden md:flex"
+              } ${expandedAssignment ? "border-r border-slate-200" : ""}`}
             >
               {assignments.map((assignment) => (
                 <AssignmentColumn
@@ -359,12 +463,16 @@ export default function ViewerA() {
         <PagingArrow
           direction={-1}
           onClick={() => scrollByColumn(-1)}
-          visible={!expandedAssignment && !sequencing && canScrollLeft}
+          visible={
+            !pinned && !expandedAssignment && !sequencing && canScrollLeft
+          }
         />
         <PagingArrow
           direction={1}
           onClick={() => scrollByColumn(1)}
-          visible={!expandedAssignment && !sequencing && canScrollRight}
+          visible={
+            !pinned && !expandedAssignment && !sequencing && canScrollRight
+          }
         />
       </div>
 
