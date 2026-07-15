@@ -306,7 +306,7 @@ export default function AssignmentColumn({
       >
         {/* モバイル: 課題情報 + グリッド切替（スクロール内sticky） */}
         {expanded && (
-          <div className={`sticky top-0 z-10 border-b border-slate-200 bg-slate-50 px-5 pb-3 pt-4 md:hidden ${gridMode === 3 ? "" : "-mx-5"}`}>
+          <div className={`sticky top-0 z-10 border-b border-slate-200 bg-slate-50 pl-5 pr-4 py-2 md:hidden ${gridMode === 3 ? "" : "-mx-5"}`}>
             <div className="flex items-center justify-between">
               <div className="flex min-w-0 items-end gap-3">
                 <p className="shrink-0 font-plex-mono text-xl font-normal leading-none tracking-tight text-slate-500">
@@ -468,8 +468,8 @@ function MobileGridModeTabs({
   onChange: (mode: GridMode) => void;
 }) {
   const options: { id: GridMode; icon: React.ReactNode; title: string }[] = [
-    { id: 1, icon: <StopIcon className="h-5 w-5" />, title: "1列表示" },
-    { id: 3, icon: <Squares2X2Icon className="h-5 w-5" />, title: "3列表示" },
+    { id: 1, icon: <StopIcon className="h-4 w-4" />, title: "1列表示" },
+    { id: 3, icon: <Squares2X2Icon className="h-4 w-4" />, title: "3列表示" },
   ];
 
   return (
@@ -485,7 +485,7 @@ function MobileGridModeTabs({
           title={opt.title}
           aria-pressed={value === opt.id}
           onClick={() => onChange(opt.id)}
-          className={`flex h-10 w-10 items-center justify-center border-r border-slate-300 transition last:border-r-0 ${
+          className={`flex h-8 w-8 items-center justify-center border-r border-slate-300 transition last:border-r-0 ${
             value === opt.id
               ? "bg-accent-a text-white"
               : "bg-white text-slate-500"

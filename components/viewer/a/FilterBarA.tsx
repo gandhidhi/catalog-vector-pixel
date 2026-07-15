@@ -92,7 +92,8 @@ export default function FilterBarA(props: FilterBarAProps) {
   if (pinned) activeSummary.push("固定: オン");
 
   return (
-    <div className="relative shrink-0 border-b border-slate-200 bg-white">
+    // 下線はデスクトップのみ（モバイルはMobileFilterMenu側の下線に一本化）
+    <div className="relative shrink-0 border-slate-200 bg-white md:border-b">
       {/* ---- Desktop bar ---- */}
       <div
         className={`hidden flex-wrap items-center gap-x-6 gap-y-3 px-8 md:flex ${
@@ -429,8 +430,8 @@ function MobileFilterMenu({
           ))}
         </div>
 
-        {/* ハンバーガーメニュー（右固定） */}
-        <div className="shrink-0 bg-white pl-2 pr-4 py-2">
+        {/* ハンバーガーメニュー（右固定・左右の余白を揃える） */}
+        <div className="shrink-0 bg-white pl-4 pr-4 py-2">
           <button
             type="button"
             onClick={() => setOpen(!open)}
