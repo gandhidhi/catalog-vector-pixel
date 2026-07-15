@@ -65,7 +65,7 @@ export default function ViewerA() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   // 展開グリッドの列数モード
   const [desktopGridMode, setDesktopGridMode] = useState<GridMode>("responsive");
-  const [mobileGridMode, setMobileGridMode] = useState<GridMode>(1);
+  const [mobileGridMode, setMobileGridMode] = useState<GridMode>(3);
   const expandedAssignment = expandedId
     ? (assignments.find((a) => a.id === expandedId) ?? null)
     : null;

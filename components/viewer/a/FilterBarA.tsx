@@ -430,8 +430,8 @@ function MobileFilterMenu({
           ))}
         </div>
 
-        {/* ハンバーガーメニュー（右固定・左右の余白を揃える） */}
-        <div className="shrink-0 bg-white pl-4 pr-4 py-2">
+        {/* ハンバーガーメニュー（右固定・背景はタブバーと同じ薄水色） */}
+        <div className="shrink-0 bg-slate-50 pl-4 pr-4 py-2">
           <button
             type="button"
             onClick={() => setOpen(!open)}
