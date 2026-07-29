@@ -225,7 +225,7 @@ export function getHtmlPage(): string {
 <body>
   <div class="container">
     <h1>convert-works</h1>
-    <p class="subtitle">.ai / .psd → PNG 変換ツール (Web UI)</p>
+    <p class="subtitle">.ai / .psd / .pdf → PNG 変換 &amp; PDF圧縮ツール (Web UI)</p>
 
     <div id="gsStatus" class="gs-status checking">⏳ Ghostscript確認中...</div>
 
@@ -278,6 +278,19 @@ export function getHtmlPage(): string {
         <div class="form-group">
           <label for="assignment">課題番号 (任意)</label>
           <input type="number" id="assignment" min="1" max="7" placeholder="例: 1" style="max-width:200px;">
+        </div>
+        <div class="form-group" style="margin-top:0.5rem;">
+          <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+            <input type="checkbox" id="compressPdf" style="width:auto;accent-color:#0071e3;">
+            <span>PDF圧縮モード（PDFをPNG変換せず圧縮のみ出力）</span>
+          </label>
+          <p style="font-size:0.75rem;color:#6e6e73;margin-top:0.3rem;margin-left:1.5rem;">
+            チェック時: .pdfファイルはGhostscriptで圧縮し、PDFのまま出力します
+          </p>
+          <div style="margin-top:0.5rem;margin-left:1.5rem;">
+            <label for="pdfMaxSize" style="font-size:0.8rem;color:#6e6e73;">PDF最大サイズ (KB)　※空欄 = 制限なし</label>
+            <input type="number" id="pdfMaxSize" placeholder="例: 5000" min="100" style="width:180px;margin-top:0.2rem;padding:0.4rem 0.6rem;border:1px solid #d2d2d7;border-radius:6px;font-size:0.85rem;">
+          </div>
         </div>
         <button type="submit" class="btn btn-primary" id="submitBtn">変換開始</button>
       </form>
@@ -423,6 +436,8 @@ export function getHtmlPage(): string {
         resolution: parseInt(document.getElementById('resolution').value) || 300,
         background: document.getElementById('background').value || 'white',
         assignment: parseInt(document.getElementById('assignment').value) || undefined,
+        compressPdf: document.getElementById('compressPdf').checked,
+        pdfMaxSize: parseInt(document.getElementById('pdfMaxSize').value) || undefined,
       };
 
       // Reset UI
@@ -502,13 +517,19 @@ export function getHtmlPage(): string {
 
         case 'fileComplete':
           if (data.success) {
-            addLog('✓ ' + data.filename + ' (' + data.width + '×' + data.height + ', ' + data.sizeKB + 'KB)', 'success');
+            if (data.isPdfCompress) {
+              addLog('✓ ' + data.filename + ' (PDF圧縮: ' + data.sizeKB + 'KB, ' + data.compressionRatio + '%削減)', 'success');
+            } else {
+              addLog('✓ ' + data.filename + ' (' + data.width + '×' + data.height + ', ' + data.sizeKB + 'KB)', 'success');
+            }
           } else {
             addLog('✗ ' + data.filename + ': ' + data.error, 'error');
           }
-          // Show preview
-          previewSection.classList.add('active');
-          addPreviewItem(data);
+          // Show preview (PNG only)
+          if (!data.isPdfCompress) {
+            previewSection.classList.add('active');
+            addPreviewItem(data);
+          }
           break;
 
         case 'skipped':

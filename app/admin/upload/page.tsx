@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { Student, Assignment } from "@/lib/types";
+import { generatePdfThumbnail } from "@/lib/pdf-thumbnail";
 
 interface UploadResult {
   id: string;
@@ -75,6 +76,17 @@ export default function UploadPage() {
       formData.append("assignmentId", selectedAssignmentId);
       if (overwrite) {
         formData.append("overwrite", "true");
+      }
+
+      // PDFの場合: クライアント側でサムネイルを生成してFormDataに添付
+      if (file.name.toLowerCase().endsWith(".pdf")) {
+        try {
+          const thumbnailBlob = await generatePdfThumbnail(file);
+          formData.append("thumbnailFile", thumbnailBlob, "thumbnail.png");
+        } catch (err) {
+          console.error("PDFサムネイル生成エラー:", err);
+          // サムネイル生成に失敗してもアップロード自体は続行
+        }
       }
 
       const res = await fetch("/api/uploads/single", {
@@ -209,13 +221,13 @@ export default function UploadPage() {
               htmlFor="file-input"
               className="block text-sm font-medium text-gray-700"
             >
-              PNGファイル（2MB以下）
+              ファイル（PNG: 2MB以下 / PDF: 10MB以下）
             </label>
             <input
               ref={fileInputRef}
               id="file-input"
               type="file"
-              accept=".png"
+              accept=".png,.pdf"
               onChange={(e) => {
                 setFile(e.target.files?.[0] ?? null);
                 setError(null);
@@ -277,8 +289,9 @@ export default function UploadPage() {
       <div className="bg-gray-50 rounded-lg p-4">
         <h4 className="text-sm font-medium text-gray-700 mb-2">アップロード要件</h4>
         <ul className="text-sm text-gray-500 list-disc list-inside space-y-1">
-          <li>ファイル形式: PNG (.png) のみ</li>
-          <li>ファイルサイズ: 2MB以下</li>
+          <li>ファイル形式: PNG (.png) または PDF (.pdf)</li>
+          <li>PNGファイルサイズ: 2MB以下</li>
+          <li>PDFファイルサイズ: 10MB以下</li>
           <li>同一学生×同一課題の重複時は上書き確認が表示されます</li>
         </ul>
       </div>

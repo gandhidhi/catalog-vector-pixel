@@ -9,7 +9,8 @@ export interface ValidationResult {
   error?: string;
 }
 
-const MAX_FILE_SIZE = 2_097_152; // 2MB in bytes
+const MAX_PNG_FILE_SIZE = 2_097_152; // 2MB in bytes
+const MAX_PDF_FILE_SIZE = 10_485_760; // 10MB in bytes
 
 /**
  * ファイル名から拡張子が .png であるかを検証する
@@ -19,10 +20,17 @@ export function validatePngExtension(filename: string): boolean {
 }
 
 /**
+ * ファイル名から拡張子が .pdf であるかを検証する
+ */
+export function validatePdfExtension(filename: string): boolean {
+  return filename.toLowerCase().endsWith(".pdf");
+}
+
+/**
  * ファイルサイズが2MB以下であるかを検証する
  */
 export function validateFileSize(size: number): boolean {
-  return size >= 0 && size <= MAX_FILE_SIZE;
+  return size >= 0 && size <= MAX_PNG_FILE_SIZE;
 }
 
 /**
@@ -49,4 +57,54 @@ export function validatePngFile(file: {
   }
 
   return { valid: true };
+}
+
+/**
+ * PDFファイルバリデーション（拡張子 + サイズ ≤ 10MB）
+ */
+export function validatePdfFile(file: {
+  name: string;
+  size: number;
+}): ValidationResult {
+  if (!validatePdfExtension(file.name)) {
+    return {
+      valid: false,
+      error: "対応ファイル形式は .pdf のみです",
+    };
+  }
+
+  if (file.size < 0 || file.size > MAX_PDF_FILE_SIZE) {
+    return {
+      valid: false,
+      error: "PDFファイルサイズは10MB以下にしてください",
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * PNG または PDF のバリデーション（拡張子判定 + サイズ）
+ * 対応形式: .png (2MB以下) / .pdf (10MB以下)
+ */
+export function validateUploadFile(file: {
+  name: string;
+  size: number;
+}): ValidationResult & { fileType?: "png" | "pdf" } {
+  const name = file.name.toLowerCase();
+
+  if (name.endsWith(".png")) {
+    const result = validatePngFile(file);
+    return { ...result, fileType: result.valid ? "png" : undefined };
+  }
+
+  if (name.endsWith(".pdf")) {
+    const result = validatePdfFile(file);
+    return { ...result, fileType: result.valid ? "pdf" : undefined };
+  }
+
+  return {
+    valid: false,
+    error: "対応ファイル形式は .png または .pdf です",
+  };
 }

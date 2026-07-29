@@ -39,6 +39,9 @@ export interface Work {
   width: number | null;
   height: number | null;
   uploadedAt: string;
+  fileType: "png" | "pdf";
+  thumbnailUrl: string | null;
+  pdfUrl: string | null;
   // Joined data
   student?: Student;
   assignment?: Assignment;
@@ -89,6 +92,9 @@ export interface WorkItem {
   assignmentNumber: number;
   imageUrl: string;
   uploadedAt: string;
+  fileType: "png" | "pdf";
+  thumbnailUrl: string | null;
+  pdfUrl: string | null;
   badges: { id: string; badgeTypeId: string; name: string }[];
 }
 

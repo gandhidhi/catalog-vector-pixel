@@ -18,6 +18,7 @@ import { platform } from "node:os";
 
 import { checkGhostscriptInstalled, convertAiToPng } from "./converter/ai-converter.js";
 import { convertPsdToPng } from "./converter/psd-converter.js";
+import { compressPdf } from "./converter/pdf-compressor.js";
 import { resizeAndCompress, type BackgroundOption } from "./converter/image-processor.js";
 import { filterConvertibleFiles } from "./converter/file-filter.js";
 import { parse, suggestCorrection } from "./validators/filename.js";
@@ -33,6 +34,8 @@ interface ConvertRequest {
   resolution?: number;
   background?: "transparent" | "white";
   assignment?: number;
+  compressPdf?: boolean;
+  pdfMaxSize?: number;
 }
 
 /**
@@ -122,6 +125,8 @@ async function handleConvert(req: IncomingMessage, res: ServerResponse): Promise
   const maxWidth = body.maxWidth ?? 2048;
   const resolution = body.resolution ?? 300;
   const background = body.background ?? "transparent";
+  const compressPdfMode = body.compressPdf ?? false;
+  const pdfMaxSizeBytes = body.pdfMaxSize ? body.pdfMaxSize * 1024 : undefined;
 
   // Preflight checks
   sendEvent("status", { message: "プリフライトチェック中..." });
@@ -204,6 +209,43 @@ async function handleConvert(req: IncomingMessage, res: ServerResponse): Promise
 
     try {
       const ext = extname(filename).toLowerCase();
+
+      // PDF圧縮モード: PDFをPNG変換せず圧縮出力
+      if (ext === ".pdf" && compressPdfMode) {
+        const result = await compressPdf(inputPath, { maxSizeBytes: pdfMaxSizeBytes });
+        const outputFilename = basename(filename, extname(filename)) + ".pdf";
+        const outputPath = join(outputDir, outputFilename);
+        await writeFile(outputPath, result.buffer);
+
+        const parseResult = parse(filename);
+        let suggestion: string | null = null;
+        if (!parseResult) {
+          suggestion = suggestCorrection(filename);
+        }
+
+        const sizeKB = Math.round((result.compressedSize / 1024) * 10) / 10;
+
+        results.push({
+          filename,
+          success: true,
+          outputPath,
+          suggestion,
+          width: undefined,
+          height: undefined,
+          sizeKB,
+        });
+
+        sendEvent("fileComplete", {
+          filename,
+          success: true,
+          sizeKB,
+          suggestion,
+          compressionRatio: result.compressionRatio,
+          isPdfCompress: true,
+        });
+        continue;
+      }
+
       let pngBuffer: Buffer;
 
       if (ext === ".ai" || ext === ".pdf") {

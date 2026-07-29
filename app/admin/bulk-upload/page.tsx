@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import type { Assignment, BulkUploadFailureReason } from "@/lib/types";
 import { parseFilename } from "@/lib/validators/filename";
-import { validatePngFile } from "@/lib/validators/upload";
+import { validateUploadFile } from "@/lib/validators/upload";
+import { generatePdfThumbnail } from "@/lib/pdf-thumbnail";
 
 interface BulkResult {
   totalFiles: number;
@@ -89,9 +90,10 @@ export default function BulkUploadPage() {
       }
 
       // クライアント側バリデーション
-      const validation = validatePngFile({ name: file.name, size: file.size });
+      const validation = validateUploadFile({ name: file.name, size: file.size });
       if (!validation.valid) {
-        const reason = file.name.toLowerCase().endsWith(".png")
+        const name = file.name.toLowerCase();
+        const reason = (name.endsWith(".png") || name.endsWith(".pdf"))
           ? "FILE_TOO_LARGE"
           : "INVALID_FORMAT";
         failures.push({ filename: file.name, reason });
@@ -126,6 +128,17 @@ export default function BulkUploadPage() {
         formData.append("studentId", studentUuid);
         formData.append("assignmentId", selectedAssignmentId);
         formData.append("overwrite", "true");
+
+        // PDFの場合: クライアント側でサムネイル生成
+        if (file.name.toLowerCase().endsWith(".pdf")) {
+          try {
+            const thumbnailBlob = await generatePdfThumbnail(file);
+            formData.append("thumbnailFile", thumbnailBlob, "thumbnail.png");
+          } catch (err) {
+            console.error("PDFサムネイル生成エラー:", err);
+            // サムネイル生成失敗でもアップロード自体は続行
+          }
+        }
 
         const uploadRes = await fetch("/api/uploads/single", {
           method: "POST",
@@ -241,13 +254,13 @@ export default function BulkUploadPage() {
               htmlFor="files-input"
               className="block text-sm font-medium text-gray-700"
             >
-              PNGファイル（複数選択可、各2MB以下）
+              PNG/PDFファイル（複数選択可、PNG: 各2MB以下 / PDF: 各10MB以下）
             </label>
             <input
               ref={fileInputRef}
               id="files-input"
               type="file"
-              accept=".png"
+              accept=".png,.pdf"
               multiple
               onChange={handleFileChange}
               disabled={uploading}
@@ -375,9 +388,9 @@ function getFailureReasonLabel(reason: string): string {
     case "STUDENT_NOT_FOUND":
       return "学籍番号が未登録";
     case "FILE_TOO_LARGE":
-      return "ファイルサイズが2MB超過";
+      return "ファイルサイズ超過（PNG: 2MB / PDF: 10MB）";
     case "INVALID_FORMAT":
-      return "PNG以外のファイル形式";
+      return "PNG・PDF以外のファイル形式";
     case "STORAGE_ERROR":
       return "ストレージ保存エラー";
     default:

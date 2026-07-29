@@ -1,9 +1,9 @@
 /**
  * ファイル名パーサー
- * パターン: {学籍番号}_{氏名}.png
+ * パターン: {学籍番号}_{氏名}.png or .pdf
  * - 学籍番号: 8桁数字
  * - 氏名: 1文字以上
- * 例: 12345001_黒須哲郎.png
+ * 例: 12345001_黒須哲郎.png, 12345001_黒須哲郎.pdf
  */
 
 export interface FilenameParseResult {
@@ -13,15 +13,15 @@ export interface FilenameParseResult {
 
 /**
  * ファイル名が命名規則に適合するかパースする
- * パターン: {8桁数字}_{氏名}.png
+ * パターン: {8桁数字}_{氏名}.(png|pdf)
  *
  * @returns パース成功時は studentId と name を返す。不適合の場合は null。
  */
 export function parseFilename(
   filename: string,
 ): FilenameParseResult | null {
-  // パターン: 先頭8桁数字 + アンダースコア + 1文字以上の氏名 + .png
-  const pattern = /^(\d{8})_(.+)\.png$/i;
+  // パターン: 先頭8桁数字 + アンダースコア + 1文字以上の氏名 + .png or .pdf
+  const pattern = /^(\d{8})_(.+)\.(png|pdf)$/i;
   const match = filename.match(pattern);
 
   if (!match) {

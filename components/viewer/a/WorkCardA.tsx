@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { PhotoIcon, ChevronRightIcon, ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { PhotoIcon, ChevronRightIcon, ChevronLeftIcon, DocumentIcon } from "@heroicons/react/24/outline";
 import { WorkItem } from "@/lib/types";
 
 interface WorkCardAProps {
@@ -33,8 +33,15 @@ export default function WorkCardA({ work, onClick, hideInfo }: WorkCardAProps) {
         <div className={`aspect-square ${hideInfo ? "w-full border border-slate-50" : "-ml-px -mt-px w-[calc(100%+1px)] border border-slate-200 bg-slate-50 p-2"}`}>
           <div className="relative h-full w-full overflow-hidden bg-slate-100">
             {imgError ? (
-              <div className="flex h-full w-full items-center justify-center text-slate-300">
-                <PhotoIcon className="h-10 w-10" />
+              <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-slate-300">
+                {work.fileType === "pdf" ? (
+                  <>
+                    <DocumentIcon className="h-12 w-12 text-slate-400" />
+                    <span className="text-xs font-medium text-slate-400">PDF</span>
+                  </>
+                ) : (
+                  <PhotoIcon className="h-10 w-10" />
+                )}
               </div>
             ) : (
               <Image
@@ -45,6 +52,13 @@ export default function WorkCardA({ work, onClick, hideInfo }: WorkCardAProps) {
                 className="object-cover transition duration-300 group-hover:scale-[1.03]"
                 onError={() => setImgError(true)}
               />
+            )}
+            {/* PDF badge */}
+            {work.fileType === "pdf" && (
+              <div className="absolute right-1 top-1 flex h-5 items-center gap-0.5 rounded bg-white/80 px-1 text-slate-500">
+                <DocumentIcon className="h-3 w-3" />
+                <span className="text-[9px] font-medium">PDF</span>
+              </div>
             )}
           </div>
         </div>

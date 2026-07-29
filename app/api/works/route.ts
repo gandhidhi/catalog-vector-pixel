@@ -152,6 +152,9 @@ export async function GET(request: NextRequest) {
       assignment_id,
       image_url,
       uploaded_at,
+      file_type,
+      thumbnail_url,
+      pdf_url,
       students!inner (id, student_id, name),
       assignments!inner (id, name, number)
     `,
@@ -251,6 +254,9 @@ export async function GET(request: NextRequest) {
       assignmentNumber: assignment.number,
       imageUrl: row.image_url,
       uploadedAt: row.uploaded_at,
+      fileType: row.file_type ?? "png",
+      thumbnailUrl: row.thumbnail_url ?? null,
+      pdfUrl: row.pdf_url ?? null,
       badges: badgesMap[row.id] ?? [],
     };
   });

@@ -9,6 +9,7 @@ import Captions from "yet-another-react-lightbox/plugins/captions";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/captions.css";
 import ViewerHeader from "@/components/viewer/ViewerHeader";
+import PdfPreviewModal from "@/components/viewer/PdfPreviewModal";
 import FilterBarA from "./FilterBarA";
 import AssignmentColumn, {
   EXPAND_ANIMATION_MS,
@@ -476,12 +477,12 @@ export default function ViewerA() {
         />
       </div>
 
-      {/* Lightbox（全画面表示 + ズームUI） */}
+      {/* Lightbox（PNG作品の全画面表示 + ズームUI） */}
       <Lightbox
-        open={selectedWork !== null}
+        open={selectedWork !== null && selectedWork.fileType !== "pdf"}
         close={() => setSelectedWork(null)}
         slides={
-          selectedWork
+          selectedWork && selectedWork.fileType !== "pdf"
             ? [
                 {
                   src: selectedWork.imageUrl,
@@ -508,6 +509,16 @@ export default function ViewerA() {
         }}
         className="yarl-light"
       />
+
+      {/* PDFプレビューモーダル */}
+      {selectedWork && selectedWork.fileType === "pdf" && selectedWork.pdfUrl && (
+        <PdfPreviewModal
+          pdfUrl={selectedWork.pdfUrl}
+          title={selectedWork.studentName}
+          subtitle={selectedWork.assignmentName}
+          onClose={() => setSelectedWork(null)}
+        />
+      )}
     </div>
   );
 }

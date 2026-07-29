@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { validatePngFile } from "@/lib/validators/upload";
+import { validateUploadFile } from "@/lib/validators/upload";
 
 /**
- * POST /api/uploads/single - 単体PNGアップロード（認証必須）
- * multipart/form-data: file (PNG), studentId, assignmentId, overwrite (optional)
+ * POST /api/uploads/single - 単体ファイルアップロード（認証必須）
+ * multipart/form-data:
+ *   file (PNG or PDF), studentId, assignmentId, overwrite (optional)
+ *   thumbnailFile (optional, PNG) - PDFの場合のサムネイル画像
  */
 export async function POST(request: Request) {
   // 認証チェック
@@ -33,6 +35,7 @@ export async function POST(request: Request) {
   }
 
   const file = formData.get("file") as File | null;
+  const thumbnailFile = formData.get("thumbnailFile") as File | null;
   const studentId = formData.get("studentId") as string | null;
   const assignmentId = formData.get("assignmentId") as string | null;
   const overwrite = formData.get("overwrite") === "true";
@@ -59,14 +62,16 @@ export async function POST(request: Request) {
     );
   }
 
-  // PNGバリデーション（拡張子 + サイズ ≤ 2MB）
-  const validation = validatePngFile({ name: file.name, size: file.size });
-  if (!validation.valid) {
+  // ファイルバリデーション（PNG: 2MB以下 / PDF: 10MB以下）
+  const validation = validateUploadFile({ name: file.name, size: file.size });
+  if (!validation.valid || !validation.fileType) {
     return NextResponse.json(
       { error: validation.error },
       { status: 422 },
     );
   }
+
+  const fileType = validation.fileType;
 
   // Admin client（RLSバイパス）でDB操作
   const adminClient = createAdminClient();
@@ -121,14 +126,16 @@ export async function POST(request: Request) {
     );
   }
 
-  // Supabase Storage にアップロード（upsert で既存ファイルを上書き）
-  const storagePath = `works/${assignmentId}/${studentId}.png`;
+  // Supabase Storage にメインファイルをアップロード
+  const ext = fileType === "pdf" ? "pdf" : "png";
+  const contentType = fileType === "pdf" ? "application/pdf" : "image/png";
+  const storagePath = `works/${assignmentId}/${studentId}.${ext}`;
   const fileBuffer = Buffer.from(await file.arrayBuffer());
 
   const { error: uploadError } = await adminClient.storage
     .from("works")
     .upload(storagePath, fileBuffer, {
-      contentType: "image/png",
+      contentType,
       upsert: true,
     });
 
@@ -144,31 +151,52 @@ export async function POST(request: Request) {
     .from("works")
     .getPublicUrl(storagePath);
 
-  const imageUrl = urlData.publicUrl;
+  const filePublicUrl = urlData.publicUrl;
+
+  // PDFの場合: サムネイルをアップロード
+  let thumbnailUrl: string | null = null;
+  if (fileType === "pdf" && thumbnailFile) {
+    const thumbPath = `works/${assignmentId}/${studentId}_thumb.png`;
+    const thumbBuffer = Buffer.from(await thumbnailFile.arrayBuffer());
+
+    const { error: thumbError } = await adminClient.storage
+      .from("works")
+      .upload(thumbPath, thumbBuffer, {
+        contentType: "image/png",
+        upsert: true,
+      });
+
+    if (!thumbError) {
+      const { data: thumbUrlData } = adminClient.storage
+        .from("works")
+        .getPublicUrl(thumbPath);
+      thumbnailUrl = thumbUrlData.publicUrl;
+    }
+  }
 
   // DB にメタデータを登録（upsert: 同一学生×課題で重複時は上書き）
+  const dbRecord: Record<string, unknown> = {
+    student_id: studentId,
+    assignment_id: assignmentId,
+    filename: file.name,
+    storage_path: storagePath,
+    image_url: fileType === "png" ? filePublicUrl : (thumbnailUrl ?? filePublicUrl),
+    file_size: file.size,
+    file_type: fileType,
+    thumbnail_url: thumbnailUrl,
+    pdf_url: fileType === "pdf" ? filePublicUrl : null,
+  };
+
   const { data: work, error: dbError } = await adminClient
     .from("works")
-    .upsert(
-      {
-        student_id: studentId,
-        assignment_id: assignmentId,
-        filename: file.name,
-        storage_path: storagePath,
-        image_url: imageUrl,
-        file_size: file.size,
-      },
-      { onConflict: "student_id,assignment_id" },
-    )
+    .upsert(dbRecord, { onConflict: "student_id,assignment_id" })
     .select()
     .single();
 
   if (dbError) {
-    // ロールバック: Storageからファイルを削除（新規の場合のみ意味がある）
+    // ロールバック: Storageからファイルを削除（新規の場合のみ）
     if (!existingWork) {
-      await adminClient.storage
-        .from("works")
-        .remove([storagePath]);
+      await adminClient.storage.from("works").remove([storagePath]);
     }
 
     return NextResponse.json(
@@ -185,7 +213,10 @@ export async function POST(request: Request) {
         studentName: student.name,
         assignmentName: assignment.name,
         filename: file.name,
-        imageUrl,
+        imageUrl: work.image_url,
+        fileType,
+        thumbnailUrl,
+        pdfUrl: work.pdf_url,
       },
     },
     { status: 201 },

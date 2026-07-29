@@ -103,6 +103,31 @@ export default function AssignmentsPage() {
     }
   }
 
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+
+  async function handleSaveEdit(id: string) {
+    if (!editingName.trim()) return;
+    try {
+      const res = await fetch(`/api/assignments/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: editingName.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "課題名の更新に失敗しました");
+        return;
+      }
+      setEditingId(null);
+      setEditingName("");
+      setSuccess(`課題名を「${editingName.trim()}」に更新しました`);
+      fetchAssignments();
+    } catch {
+      setError("通信エラーが発生しました");
+    }
+  }
+
   async function handleDeleteAssignment(id: string, name: string) {
     if (!confirm(`課題「${name}」を削除しますか？`)) return;
     try {
@@ -240,7 +265,43 @@ export default function AssignmentsPage() {
                       {assignment.number}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {assignment.name}
+                      {editingId === assignment.id ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={editingName}
+                            onChange={(e) => setEditingName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleSaveEdit(assignment.id);
+                              if (e.key === "Escape") { setEditingId(null); setEditingName(""); }
+                            }}
+                            className="rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleSaveEdit(assignment.id)}
+                            className="text-blue-600 hover:text-blue-800 text-xs font-medium"
+                          >
+                            保存
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setEditingId(null); setEditingName(""); }}
+                            className="text-gray-400 hover:text-gray-600 text-xs"
+                          >
+                            キャンセル
+                          </button>
+                        </div>
+                      ) : (
+                        <span
+                          className="cursor-pointer hover:text-blue-600"
+                          onClick={() => { setEditingId(assignment.id); setEditingName(assignment.name); }}
+                          title="クリックで編集"
+                        >
+                          {assignment.name}
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(assignment.createdAt).toLocaleDateString(

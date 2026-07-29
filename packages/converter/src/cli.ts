@@ -20,6 +20,7 @@ import { constants } from "node:fs";
 
 import { checkGhostscriptInstalled, convertAiToPng } from "./converter/ai-converter.js";
 import { convertPsdToPng } from "./converter/psd-converter.js";
+import { compressPdf } from "./converter/pdf-compressor.js";
 import { resizeAndCompress } from "./converter/image-processor.js";
 import { filterConvertibleFiles } from "./converter/file-filter.js";
 import { parse, suggestCorrection } from "./validators/filename.js";
@@ -29,6 +30,8 @@ interface CliOptions {
   output?: string;
   maxSize: string;
   maxWidth: string;
+  compressPdf: boolean;
+  pdfMaxSize?: string;
 }
 
 interface ProcessingResult {
@@ -50,6 +53,8 @@ program
   .option("-o, --output <dir>", "出力先ディレクトリ (default: <inputDir>/converted)")
   .option("-s, --max-size <kb>", "最大ファイルサイズ (KB)", "500")
   .option("-w, --max-width <px>", "最大長辺 (px)", "1280")
+  .option("--compress-pdf", "PDFをPNG変換せず圧縮のみ出力", false)
+  .option("--pdf-max-size <kb>", "PDF圧縮時の最大ファイルサイズ (KB)")
   .action(async (inputDir: string, options: CliOptions) => {
     await run(inputDir, options);
   });
@@ -138,6 +143,34 @@ async function run(inputDir: string, options: CliOptions): Promise<void> {
       // Detect type and convert
       const ext = extname(filename).toLowerCase();
       let pngBuffer: Buffer;
+
+      if (ext === ".pdf" && options.compressPdf) {
+        // PDF圧縮モード: PNGに変換せず圧縮PDFとして出力
+        const pdfMaxSizeBytes = options.pdfMaxSize
+          ? parseInt(options.pdfMaxSize, 10) * 1024
+          : undefined;
+        const result = await compressPdf(inputPath, { maxSizeBytes: pdfMaxSizeBytes });
+        const outputFilename = basename(filename, extname(filename)) + ".pdf";
+        const outputPath = join(outputDir, outputFilename);
+        await writeFile(outputPath, result.buffer);
+
+        const sizeKB = (result.compressedSize / 1024).toFixed(1);
+        const ratio = result.compressionRatio;
+        console.log(`  ✓ 圧縮完了 (${sizeKB} KB, ${ratio}%削減)`);
+
+        // Validate/suggest filename correction
+        const parseResult = parse(filename);
+        let suggestion: string | null = null;
+        if (!parseResult) {
+          suggestion = suggestCorrection(filename);
+          if (suggestion) {
+            console.log(`  ⚠ ファイル名修正候補: ${suggestion}`);
+          }
+        }
+
+        results.push({ filename, success: true, outputPath, suggestion });
+        continue;
+      }
 
       if (ext === ".ai" || ext === ".pdf") {
         pngBuffer = await convertAiToPng(inputPath);

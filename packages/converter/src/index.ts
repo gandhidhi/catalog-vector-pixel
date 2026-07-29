@@ -15,6 +15,9 @@ export { convertAiToPng, checkGhostscriptInstalled } from "./converter/ai-conver
 // PSD converter
 export { convertPsdToPng } from "./converter/psd-converter.js";
 
+// PDF compressor
+export { compressPdf, pdfFirstPageToPng, type PdfCompressionLevel, type PdfCompressOptions, type PdfCompressResult } from "./converter/pdf-compressor.js";
+
 // Filename validator
 export {
   parse as parseFilename,
