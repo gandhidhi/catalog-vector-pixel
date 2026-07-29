@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronRightIcon, ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { ChevronRightIcon, ChevronLeftIcon, MagnifyingGlassPlusIcon, MagnifyingGlassMinusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Assignment, WorkItem, WorkListResponse } from "@/lib/types";
 import Lightbox from "yet-another-react-lightbox";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
@@ -40,6 +40,13 @@ export default function ViewerA() {
   const [sortBy, setSortBy] = useState<SortOptionA>("random");
 
   const [selectedWork, setSelectedWork] = useState<WorkItem | null>(null);
+  const [captionsHidden, setCaptionsHidden] = useState(false);
+
+  // ライトボックスを閉じたらキャプション表示をリセット
+  function handleLightboxClose() {
+    setSelectedWork(null);
+    setCaptionsHidden(false);
+  }
 
   // モバイル: 選択中の課題タブ（最初は1番目）
   const [mobileTabId, setMobileTabId] = useState<string | null>(null);
@@ -489,7 +496,7 @@ export default function ViewerA() {
       {/* Lightbox（PNG作品の全画面表示 + ズームUI） */}
       <Lightbox
         open={selectedWork !== null && selectedWork.fileType !== "pdf"}
-        close={() => setSelectedWork(null)}
+        close={handleLightboxClose}
         slides={
           selectedWork && selectedWork.fileType !== "pdf"
             ? [
@@ -510,13 +517,41 @@ export default function ViewerA() {
         zoom={{ maxZoomPixelRatio: 4, scrollToZoom: true }}
         carousel={{ finite: true, padding: "5%" }}
         controller={{ closeOnBackdropClick: true }}
-        render={{ buttonPrev: () => null, buttonNext: () => null }}
+        render={{
+          buttonPrev: () => null,
+          buttonNext: () => null,
+          iconZoomIn: () => <MagnifyingGlassPlusIcon className="yarl__icon" />,
+          iconZoomOut: () => <MagnifyingGlassMinusIcon className="yarl__icon" />,
+          iconClose: () => <XMarkIcon className="yarl__icon" />,
+        }}
+        toolbar={{
+          buttons: [
+            <button
+              key="toggle-captions"
+              type="button"
+              onClick={() => setCaptionsHidden((h) => !h)}
+              aria-label={captionsHidden ? "情報を表示" : "情報を非表示"}
+              className="yarl__button"
+            >
+              {captionsHidden ? (
+                <svg className="yarl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                </svg>
+              ) : (
+                <svg className="yarl__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+                </svg>
+              )}
+            </button>,
+            "close",
+          ],
+        }}
         styles={{
           container: { backgroundColor: "rgba(248, 250, 252, 0.95)" },
           icon: { color: "rgb(255, 255, 255)" },
           button: { color: "rgb(255, 255, 255)" },
         }}
-        className="yarl-light"
+        className={`yarl-light ${captionsHidden ? "yarl-captions-hidden" : ""}`}
       />
 
       {/* PDFプレビューモーダル（デスクトップ: iframe / モバイル: 別タブ） */}
@@ -525,7 +560,7 @@ export default function ViewerA() {
           pdfUrl={selectedWork.pdfUrl}
           title={selectedWork.studentName}
           subtitle={selectedWork.assignmentName}
-          onClose={() => setSelectedWork(null)}
+          onClose={handleLightboxClose}
         />
       )}
     </div>

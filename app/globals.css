@@ -37,6 +37,30 @@ body {
 .yarl__button {
   filter: none !important;
 }
+
+/* キャプション非表示モード: タイトル/説明コンテナを畳む */
+.yarl-captions-hidden .yarl__slide_title_container,
+.yarl-captions-hidden .yarl__slide_description_container {
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: height 200ms ease-out, opacity 200ms ease-out;
+}
+.yarl-captions-hidden .yarl__slide {
+  padding-top: 16px !important;
+  padding-bottom: 16px !important;
+}
+.yarl-captions-hidden .yarl__button {
+  color: rgb(30, 41, 59) !important;
+  border-color: transparent !important;
+}
+.yarl-captions-hidden .yarl__icon {
+  color: rgb(30, 41, 59) !important;
+}
+.yarl-captions-hidden .yarl__button svg {
+  color: rgb(30, 41, 59) !important;
+  stroke: rgb(30, 41, 59) !important;
+}
 .yarl__slide_description {
   font-size: 12px !important;
   line-height: 1.6;
