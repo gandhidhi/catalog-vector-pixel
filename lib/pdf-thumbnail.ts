@@ -51,6 +51,7 @@ export async function generatePdfThumbnail(
     canvasContext: ctx,
     viewport: scaledViewport,
     transform: [1, 0, 0, 1, offsetX, offsetY],
+    canvas,
   }).promise;
 
   // Canvas を PNG Blob に変換

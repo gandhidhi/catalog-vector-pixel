@@ -20,9 +20,9 @@ interface SearchMenuBProps {
   selectedBadges: string[];
   onBadgesChange: (ids: string[]) => void;
   threeTagsOnly: boolean;
-  onThreeTagsChange: (value: boolean) => void;
+  onThreeTagsChange: (_value: boolean) => void;
   sortBy: SortOptionA;
-  onSortChange: (sort: SortOptionA) => void;
+  onSortChange: (_sort: SortOptionA) => void;
 }
 
 /** 要素の外側をクリックしたら onClose を呼ぶ */

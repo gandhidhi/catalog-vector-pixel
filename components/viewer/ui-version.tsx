@@ -27,7 +27,7 @@ const DEFAULT_VERSION: UIVersion = "a";
 
 interface UIVersionContextValue {
   version: UIVersion;
-  setVersion: (version: UIVersion) => void;
+  setVersion: (_version: UIVersion) => void;
 }
 
 const UIVersionContext = createContext<UIVersionContextValue>({

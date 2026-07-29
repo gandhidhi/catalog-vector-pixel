@@ -161,7 +161,6 @@ export default function ViewerB() {
 
   // モバイル: スクロール位置に基づくアクティブ行（タブバー直下の行をカラー表示）
   const [activeRow, setActiveRow] = useState(0);
-  const headingRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = gridRef.current;
