@@ -1,14 +1,21 @@
 /**
  * クライアント側でpdf.jsを使ってPDFの1ページ目からサムネイル（正方形クロップ PNG）を生成する。
  * 管理画面のアップロードフォームで使用。
+ *
+ * pdfjs-dist はブラウザ専用APIに依存するため、dynamic importで読み込む。
  */
 
-import * as pdfjsLib from "pdfjs-dist";
+let pdfjsLoaded: typeof import("pdfjs-dist") | null = null;
 
-// pdf.js の Worker をunpkg CDNから読み込む（npmバージョンと一致させる）
-if (typeof window !== "undefined" && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+async function getPdfjs() {
+  if (pdfjsLoaded) return pdfjsLoaded;
+  const pdfjs = await import("pdfjs-dist");
+  if (!pdfjs.GlobalWorkerOptions.workerSrc) {
+    pdfjs.GlobalWorkerOptions.workerSrc =
+      `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+  }
+  pdfjsLoaded = pdfjs;
+  return pdfjs;
 }
 
 /**
@@ -22,6 +29,8 @@ export async function generatePdfThumbnail(
   pdfFile: File,
   size: number = 512,
 ): Promise<Blob> {
+  const pdfjsLib = await getPdfjs();
+
   const arrayBuffer = await pdfFile.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const page = await pdf.getPage(1);
@@ -71,6 +80,7 @@ export async function generatePdfThumbnail(
  * PDF の File からページ数を取得する。
  */
 export async function getPdfPageCount(pdfFile: File): Promise<number> {
+  const pdfjsLib = await getPdfjs();
   const arrayBuffer = await pdfFile.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   return pdf.numPages;
