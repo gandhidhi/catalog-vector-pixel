@@ -32,12 +32,15 @@ export async function generatePdfThumbnail(
   const pdfjsLib = await getPdfjs();
 
   const arrayBuffer = await pdfFile.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({
+  const loadingTask = pdfjsLib.getDocument({
     data: arrayBuffer,
     cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/cmaps/`,
     cMapPacked: true,
     standardFontDataUrl: `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/standard_fonts/`,
-  }).promise;
+    disableFontFace: false,
+    useSystemFonts: true,
+  });
+  const pdf = await loadingTask.promise;
   const page = await pdf.getPage(1);
 
   // ページの元サイズを取得
@@ -48,7 +51,7 @@ export async function generatePdfThumbnail(
   const scale = size / shortSide;
   const scaledViewport = page.getViewport({ scale });
 
-  // Canvas にレンダリング
+  // Canvas にレンダリング（フォント読み込みを待つためOperatorListを先に取得）
   const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = size;
@@ -67,6 +70,11 @@ export async function generatePdfThumbnail(
     transform: [1, 0, 0, 1, offsetX, offsetY],
     canvas,
   }).promise;
+
+  // フォントのレンダリングが完全に完了するのを待つ
+  await document.fonts.ready;
+  // 少し待機してフォント描画を確実にする
+  await new Promise((resolve) => setTimeout(resolve, 100));
 
   // Canvas を PNG Blob に変換
   return new Promise<Blob>((resolve, reject) => {
