@@ -32,7 +32,12 @@ export async function generatePdfThumbnail(
   const pdfjsLib = await getPdfjs();
 
   const arrayBuffer = await pdfFile.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const pdf = await pdfjsLib.getDocument({
+    data: arrayBuffer,
+    cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/cmaps/`,
+    cMapPacked: true,
+    standardFontDataUrl: `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/standard_fonts/`,
+  }).promise;
   const page = await pdf.getPage(1);
 
   // ページの元サイズを取得
@@ -82,6 +87,10 @@ export async function generatePdfThumbnail(
 export async function getPdfPageCount(pdfFile: File): Promise<number> {
   const pdfjsLib = await getPdfjs();
   const arrayBuffer = await pdfFile.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const pdf = await pdfjsLib.getDocument({
+    data: arrayBuffer,
+    cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/cmaps/`,
+    cMapPacked: true,
+  }).promise;
   return pdf.numPages;
 }
