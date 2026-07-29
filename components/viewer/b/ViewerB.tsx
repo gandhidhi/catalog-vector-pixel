@@ -150,6 +150,15 @@ export default function ViewerB() {
 
   const [selectedWork, setSelectedWork] = useState<WorkItem | null>(null);
 
+  // PDF作品クリック: モバイルでは別タブで開く
+  function handleWorkClick(work: WorkItem) {
+    if (work.fileType === "pdf" && work.pdfUrl && window.innerWidth < 768) {
+      window.open(work.pdfUrl, "_blank");
+      return;
+    }
+    setSelectedWork(work);
+  }
+
   const listRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const fetchIdRef = useRef(0);
@@ -507,7 +516,7 @@ export default function ViewerB() {
               work={work}
               large={largeFlags[i] ?? false}
               active={isWorkActive(i)}
-              onClick={() => setSelectedWork(work)}
+              onClick={() => handleWorkClick(work)}
             />
           ))}
 

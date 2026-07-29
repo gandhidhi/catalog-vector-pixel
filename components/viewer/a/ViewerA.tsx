@@ -303,6 +303,15 @@ export default function ViewerA() {
     setAppliedStudentIds([]);
   }
 
+  // PDF作品クリック: モバイルでは別タブで開く、デスクトップではモーダル表示
+  function handleWorkClick(work: WorkItem) {
+    if (work.fileType === "pdf" && work.pdfUrl && window.innerWidth < 768) {
+      window.open(work.pdfUrl, "_blank");
+      return;
+    }
+    setSelectedWork(work);
+  }
+
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* モバイル: ヘッダー（常時表示） */}
@@ -364,7 +373,7 @@ export default function ViewerA() {
                   appliedStudentIds={appliedStudentIds}
                   badgeIds={selectedBadges}
                   minBadges={threeTagsOnly ? 3 : 0}
-                  onWorkClick={setSelectedWork}
+                  onWorkClick={handleWorkClick}
                 />
               </div>
             )}
@@ -385,7 +394,7 @@ export default function ViewerA() {
                   badgeIds={selectedBadges}
                   minBadges={threeTagsOnly ? 3 : 0}
                   sortBy={sortBy}
-                  onWorkClick={setSelectedWork}
+                  onWorkClick={handleWorkClick}
                   expanded={expandedId === assignment.id}
                   hiddenAway={
                     expandedId !== null && expandedId !== assignment.id
@@ -417,7 +426,7 @@ export default function ViewerA() {
                       badgeIds={selectedBadges}
                       minBadges={threeTagsOnly ? 3 : 0}
                       sortBy={sortBy}
-                      onWorkClick={setSelectedWork}
+                      onWorkClick={handleWorkClick}
                       expanded={true}
                       gridMode={mobileGridMode}
                       onGridModeChange={setMobileGridMode}
@@ -510,7 +519,7 @@ export default function ViewerA() {
         className="yarl-light"
       />
 
-      {/* PDFプレビューモーダル */}
+      {/* PDFプレビューモーダル（デスクトップ: iframe / モバイル: 別タブ） */}
       {selectedWork && selectedWork.fileType === "pdf" && selectedWork.pdfUrl && (
         <PdfPreviewModal
           pdfUrl={selectedWork.pdfUrl}
