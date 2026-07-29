@@ -139,41 +139,28 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(response);
   }
 
-  // データクエリ（JOINあり）
+  // データクエリ（ビューを使用: 学籍番号でのソートに対応）
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
   let dataQuery = supabase
-    .from("works")
-    .select(
-      `
-      id,
-      student_id,
-      assignment_id,
-      image_url,
-      uploaded_at,
-      file_type,
-      thumbnail_url,
-      pdf_url,
-      students!inner (id, student_id, name),
-      assignments!inner (id, name, number)
-    `,
-    );
+    .from("works_with_student")
+    .select("*");
 
   // ソート順の適用
   if (sortByParam === "student_asc") {
     dataQuery = dataQuery
-      .order("student_id", { referencedTable: "students", ascending: true })
-      .order("number", { referencedTable: "assignments", ascending: false });
+      .order("student_number", { ascending: true })
+      .order("assignment_number", { ascending: false });
   } else if (sortByParam === "student_desc") {
     dataQuery = dataQuery
-      .order("student_id", { referencedTable: "students", ascending: false })
-      .order("number", { referencedTable: "assignments", ascending: false });
+      .order("student_number", { ascending: false })
+      .order("assignment_number", { ascending: false });
   } else {
     // デフォルト: assignment_desc
     dataQuery = dataQuery
-      .order("number", { referencedTable: "assignments", ascending: false })
-      .order("student_id", { ascending: true });
+      .order("assignment_number", { ascending: false })
+      .order("student_number", { ascending: true });
   }
 
   dataQuery = dataQuery.range(from, to);
@@ -238,20 +225,13 @@ export async function GET(request: NextRequest) {
 
   // レスポンスの構築
   const works: WorkItem[] = (worksData ?? []).map((row) => {
-    const student = row.students as unknown as { id: string; student_id: string; name: string };
-    const assignment = row.assignments as unknown as {
-      id: string;
-      name: string;
-      number: number;
-    };
-
     return {
       id: row.id,
       studentId: row.student_id,
-      studentName: student.name,
+      studentName: row.student_name,
       assignmentId: row.assignment_id,
-      assignmentName: assignment.name,
-      assignmentNumber: assignment.number,
+      assignmentName: row.assignment_name,
+      assignmentNumber: row.assignment_number,
       imageUrl: row.image_url,
       uploadedAt: row.uploaded_at,
       fileType: row.file_type ?? "png",
