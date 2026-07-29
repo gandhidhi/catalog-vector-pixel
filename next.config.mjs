@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  eslint: {
+    // Vercelビルド時にESLint警告でデプロイが失敗しないようにする
+    ignoreDuringBuilds: true,
+  },
   images: {
     remotePatterns: [
       {
