@@ -22,6 +22,7 @@ export default function UploadPage() {
   const [selectedStudentId, setSelectedStudentId] = useState("");
   const [selectedAssignmentId, setSelectedAssignmentId] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 
   // Feedback state
   const [error, setError] = useState<string | null>(null);
@@ -78,14 +79,17 @@ export default function UploadPage() {
         formData.append("overwrite", "true");
       }
 
-      // PDFの場合: クライアント側でサムネイルを生成してFormDataに添付
+      // PDFの場合: 手動アップロードのサムネイルを優先、なければ自動生成を試行
       if (file.name.toLowerCase().endsWith(".pdf")) {
-        try {
-          const thumbnailBlob = await generatePdfThumbnail(file);
-          formData.append("thumbnailFile", thumbnailBlob, "thumbnail.png");
-        } catch (err) {
-          console.error("PDFサムネイル生成エラー:", err);
-          // サムネイル生成に失敗してもアップロード自体は続行
+        if (thumbnailFile) {
+          formData.append("thumbnailFile", thumbnailFile);
+        } else {
+          try {
+            const thumbnailBlob = await generatePdfThumbnail(file);
+            formData.append("thumbnailFile", thumbnailBlob, "thumbnail.png");
+          } catch (err) {
+            console.error("PDFサムネイル自動生成エラー:", err);
+          }
         }
       }
 
@@ -110,6 +114,7 @@ export default function UploadPage() {
       setSuccess(data.work);
       // フォームリセット
       setFile(null);
+      setThumbnailFile(null);
       setSelectedStudentId("");
       setSelectedAssignmentId("");
       if (fileInputRef.current) {
@@ -230,12 +235,35 @@ export default function UploadPage() {
               accept=".png,.pdf"
               onChange={(e) => {
                 setFile(e.target.files?.[0] ?? null);
+                setThumbnailFile(null);
                 setError(null);
                 setSuccess(null);
               }}
               className="mt-1 block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
           </div>
+
+          {/* PDFの場合: サムネイル手動アップロード */}
+          {file && file.name.toLowerCase().endsWith(".pdf") && (
+            <div>
+              <label
+                htmlFor="thumbnail-input"
+                className="block text-sm font-medium text-gray-700"
+              >
+                サムネイル画像（PNG、任意）
+              </label>
+              <p className="mt-0.5 text-xs text-gray-500">
+                PDFの1ページ目の画像を手動で指定できます。未指定の場合は自動生成を試みます。
+              </p>
+              <input
+                id="thumbnail-input"
+                type="file"
+                accept=".png"
+                onChange={(e) => setThumbnailFile(e.target.files?.[0] ?? null)}
+                className="mt-1 block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+            </div>
+          )}
 
           {/* アップロードボタン */}
           <button
