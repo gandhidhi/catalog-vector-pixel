@@ -171,6 +171,8 @@ export async function POST(request: Request) {
         .from("works")
         .getPublicUrl(thumbPath);
       thumbnailUrl = thumbUrlData.publicUrl;
+    } else {
+      console.error("サムネイルアップロードエラー:", thumbError);
     }
   }
 

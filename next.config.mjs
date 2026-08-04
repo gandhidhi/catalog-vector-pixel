@@ -1,18 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    // Vercelビルド時にESLint警告でデプロイが失敗しないようにする
-    ignoreDuringBuilds: true,
-  },
+  output: "standalone",  // ← 追加
   images: {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "*.supabase.co",
+        hostname: "api.proto-ixd.org",  // ← 変更
         pathname: "/storage/v1/object/public/**",
       },
     ],
   },
+  // eslint の ignoreDuringBuilds は残してOK
 };
 
 export default nextConfig;
